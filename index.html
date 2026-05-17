@@ -8715,15 +8715,45 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Bouton retour Android — intercepter popstate
   history.replaceState({ tab: 'dashboard' }, '', '#dashboard');
+
+  // ── Bouton retour Android — comportement en deux temps ──
+  let _backPressedOnce = false;
+  let _backPressTimer  = null;
+
   window.addEventListener('popstate', e => {
-    if (!Auth.currentUser) return; // Pas connecté — laisser le nav normal
+    if (!Auth.currentUser) return; // Non connecté → nav navigateur normal
+
     const tabId = e.state?.tab || 'dashboard';
-    // Si on revient à dashboard depuis dashboard → aller à l'accueil système (ne pas quitter)
-    if (tabId === 'dashboard' && UI._currentTab === 'dashboard') {
+
+    // CAS 1 : on est sur le Dashboard et on appuie retour
+    // → Comportement en deux temps : toast "appuyez encore" puis quitter
+    if (UI._currentTab === 'dashboard') {
+      // Remettre l'état pour ne pas quitter immédiatement
       history.pushState({ tab: 'dashboard' }, '', '#dashboard');
+
+      if (_backPressedOnce) {
+        // Deuxième appui dans les 2 secondes → quitter l'application
+        clearTimeout(_backPressTimer);
+        window.close(); // Fonctionne sur WebView (APK Median)
+        // Fallback navigateur : retour dans l'historique du navigateur
+        history.go(-1);
+        return;
+      }
+
+      // Premier appui → afficher le toast et attendre
+      _backPressedOnce = true;
+      UI.toast('Appuyez encore pour quitter', 'warning');
+      _backPressTimer = setTimeout(() => {
+        _backPressedOnce = false;
+      }, 2000);
       return;
     }
-    UI.switchTab(tabId, true); // true = depuis popstate, ne pas re-pousher
+
+    // CAS 2 : on est sur n'importe quel autre onglet
+    // → Revenir au Dashboard
+    _backPressedOnce = false;
+    clearTimeout(_backPressTimer);
+    UI.switchTab('dashboard', true);
   });
 
   // EOD Summary — planifier pour aujourd'hui
