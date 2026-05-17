@@ -1365,7 +1365,14 @@ CREATE POLICY "public_access" ON smp_data
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Article</label><select id="s-item" onchange="Sales.syncFields()"></select></div>
       <div class="form-group"><label class="form-label">Quantité</label><input type="number" id="s-qty" value="1" min="1" inputmode="numeric" oninput="Sales.validate()"></div>
-      <div class="form-group"><label class="form-label">Prix Unitaire</label><input type="number" id="s-price" inputmode="decimal" oninput="Sales.validate()"></div>
+      <div class="form-group"><label class="form-label">Prix Unitaire <button type="button" onclick="Sales.toggleDiscount()" style="background:none;border:none;color:var(--warning);font-size:.65rem;cursor:pointer;font-family:var(--fm);text-decoration:underline;padding:0;margin-left:6px" id="s-discount-toggle">± Modifier le prix</button></label><input type="number" id="s-price" inputmode="decimal" oninput="Sales.validate()"></div>
+      <div class="form-group" id="s-discount-wrap" style="display:none">
+        <label class="form-label" style="color:var(--warning)">Prix réel de vente <span style="font-size:.6rem">(modifié)</span></label>
+        <input type="number" id="s-real-price" inputmode="decimal" oninput="Sales.validate()" placeholder="Prix négocié...">
+        <div style="margin-top:4px">
+          <input type="text" id="s-discount-reason" placeholder="Motif : fidélité, négociation... (optionnel)" style="font-size:.72rem;padding:6px 10px">
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">Montant Payé</label><input type="number" id="s-paid" inputmode="decimal" placeholder="Vide = tout payé" oninput="Sales.validate()"></div>
       <div class="form-group"><label class="form-label">Nom Client (dettes)</label><input type="text" id="s-client" placeholder="—"></div>
       <div class="form-group" id="s-change-wrap" style="display:none">
@@ -3726,7 +3733,7 @@ const UI = {
         <td><span class="badge badge-gray">${Utils.esc(s.userName)}</span></td>
         <td class="fw-700">${Utils.esc(s.itemName)}</td>
         <td class="td-mono">${s.qty}</td>
-        <td class="td-mono fw-700">${Utils.currency(s.total)}</td>
+        <td class="td-mono fw-700">${Utils.currency(s.total)}${s.priceModified ? '<span title="'+(s.discountReason||'Prix modifié')+'" style="margin-left:4px;font-size:.6rem;color:'+(s.price<(s.priceRef||s.price)?'var(--warning)':'var(--accent)')+'">('+(s.price<(s.priceRef||s.price)?'remise':'surplus')+')</span>' : ''}</td>
         <td>${s.debt>0?`<span class="badge badge-red">Dette ${Utils.currency(s.debt)}</span>`:`<span class="badge badge-green">Soldé</span>`}</td>
         <td>
           <button class="btn btn-danger btn-sm" onclick="Sales.cancel('${Utils.esc(s.id)}')" ${!Auth.isAdmin()?'disabled':''}>Annuler</button>
@@ -3798,6 +3805,29 @@ const UI = {
 
 /* ═══════════════ SALES ═══════════════ */
 const Sales = {
+  toggleDiscount() {
+    const wrap   = document.getElementById('s-discount-wrap');
+    const toggle = document.getElementById('s-discount-toggle');
+    const priceEl = document.getElementById('s-price');
+    if (!wrap) return;
+    const isOpen = wrap.style.display !== 'none';
+    wrap.style.display = isOpen ? 'none' : '';
+    if (toggle) toggle.textContent = isOpen ? '± Modifier le prix' : '✕ Annuler modification';
+    if (!isOpen) {
+      // Pré-remplir le prix réel avec le prix du stock
+      const realEl = document.getElementById('s-real-price');
+      if (realEl && priceEl) realEl.value = priceEl.value;
+      setTimeout(() => document.getElementById('s-real-price')?.focus(), 50);
+    } else {
+      // Réinitialiser
+      const realEl = document.getElementById('s-real-price');
+      const reasonEl = document.getElementById('s-discount-reason');
+      if (realEl) realEl.value = '';
+      if (reasonEl) reasonEl.value = '';
+    }
+    this.validate();
+  },
+
   syncFields() {
     const item = DB.data.items.find(i=>i.id===document.getElementById('s-item')?.value);
     if (item) { const el=document.getElementById('s-price'); if(el) el.value=item.sell; }
@@ -3806,7 +3836,11 @@ const Sales = {
   validate() {
     const id    = document.getElementById('s-item')?.value;
     const qty   = Utils.int(document.getElementById('s-qty')?.value);
-    const price = Utils.num(document.getElementById('s-price')?.value);
+    const basePrice = Utils.num(document.getElementById('s-price')?.value);
+    // Prix réel = prix négocié si champ visible, sinon prix du stock
+    const realPriceEl = document.getElementById('s-real-price');
+    const discountOpen = document.getElementById('s-discount-wrap')?.style.display !== 'none';
+    const price = (discountOpen && realPriceEl && realPriceEl.value !== '') ? Utils.num(realPriceEl.value) : basePrice;
     const item  = DB.data.items.find(i=>i.id===id);
     const btn   = document.getElementById('btn-do-sale');
     const warn  = document.getElementById('sale-warning');
@@ -3865,7 +3899,10 @@ const Sales = {
       debt: Math.max(0, total - (isNaN(paid)?total:paid)),
       profit: (price-item.buy)*qty,
       userId:Auth.currentUser.id, userName:Auth.currentUser.name,
-      clientName:client, deleted:false
+      clientName:client, deleted:false,
+      priceRef: basePrice,
+      priceModified: priceModified || false,
+      discountReason: discountReason || ''
     });
     item.qty -= qty;
     // Award loyalty points if client name provided
@@ -3874,6 +3911,11 @@ const Sales = {
     const pEl=document.getElementById('s-paid'); if(pEl) pEl.value='';
     const cEl=document.getElementById('s-client'); if(cEl) cEl.value='';
     if (Settings.data.resetQty) { const qEl=document.getElementById('s-qty'); if(qEl) qEl.value='1'; }
+    // Réinitialiser le champ remise
+    const rWrap = document.getElementById('s-discount-wrap'); if(rWrap) rWrap.style.display='none';
+    const rEl   = document.getElementById('s-real-price');    if(rEl)   rEl.value='';
+    const rsnEl = document.getElementById('s-discount-reason'); if(rsnEl) rsnEl.value='';
+    const rtgl  = document.getElementById('s-discount-toggle'); if(rtgl)  rtgl.textContent='± Modifier le prix';
     UI.renderAll();
     UI.toast('Vente enregistrée avec succès','success');
   },
