@@ -11,9 +11,9 @@
 <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Smart%20Market%20Pro%22%2C%22short_name%22%3A%22SMP%22%2C%22description%22%3A%22Application%20de%20gestion%20commerciale%20pour%20commer%5Cu00e7ants%20africains%22%2C%22start_url%22%3A%22.%2F%22%2C%22scope%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23080c10%22%2C%22theme_color%22%3A%22%2300e87a%22%2C%22orientation%22%3A%22portrait-primary%22%2C%22lang%22%3A%22fr%22%2C%22categories%22%3A%5B%22business%22%2C%22finance%22%2C%22productivity%22%5D%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520rx%253D%252796%2527%2520fill%253D%2527%25252300e87a%2527%2F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527340%2527%2520font-size%253D%2527280%2527%2520text-anchor%253D%2527middle%2527%2520font-family%253D%2527Arial%2520Black%252Csans-serif%2527%2520font-weight%253D%2527900%2527%2520fill%253D%2527%252523080c10%2527%253ES%253C%2Ftext%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527430%2527%2520font-size%253D%252772%2527%2520text-anchor%253D%2527middle%2527%2520font-family%253D%2527Arial%252Csans-serif%2527%2520font-weight%253D%2527700%2527%2520fill%253D%2527%252523080c10%2527%253EMP%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22screenshots%22%3A%5B%5D%2C%22prefer_related_applications%22%3Afalse%7D">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SMP">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<script src="https://cdn.jsdelivr.net/npm/chart.js" onerror="window.Chart=null;console.warn('[SMP] Chart.js non disponible - mode hors ligne')"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.supabase=null;console.warn('[SMP] Supabase non disponible - mode hors ligne')"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" onerror="console.info('[SMP] Google Fonts non disponible - polices systeme utilisees')">
 <noscript></noscript>
 <style>
 :root {
@@ -219,7 +219,30 @@ tbody tr:last-child td{border-bottom:none;}
   /* Tous les tableaux : cartes sur mobile */
   #tableStock,#tableUsers,#tableDebts,#tableHistory,
   #tableExpenses,#tableCommissions,#tableReturns,
-  #tableSuppliers,#tableLoyalty{min-width:520px;}
+  /* Fournisseurs : cartes mobile */
+  #tableSuppliers{min-width:unset !important;}
+  #tableSuppliers thead{display:none;}
+  #tableSuppliers tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;padding:12px;border:1px solid var(--border);border-radius:var(--rmd);margin-bottom:8px;background:var(--sur2);}
+  #tableSuppliers td{padding:0;border:none;font-size:.8rem;}
+  #tableSuppliers td:nth-child(1){grid-column:1/-1;font-weight:800;font-size:.9rem;}
+  #tableSuppliers td:nth-child(2){font-family:var(--fm);font-size:.72rem;color:var(--text3);}
+  #tableSuppliers td:nth-child(3){font-family:var(--fm);font-size:.72rem;text-align:right;}
+  #tableSuppliers td:nth-child(4){font-family:var(--fm);font-size:.68rem;color:var(--text3);}
+  #tableSuppliers td:nth-child(5){font-family:var(--fd);font-weight:700;color:var(--accent);text-align:right;}
+  #tableSuppliers td:nth-child(6){display:none;}
+  #tableSuppliers td:nth-child(7){grid-column:1/-1;display:flex;gap:6px;margin-top:4px;}
+  #tableSuppliers td:nth-child(7) button{flex:1;}
+
+  /* Fidélité : cartes mobile */
+  #tableLoyalty{min-width:unset !important;}
+  #tableLoyalty thead{display:none;}
+  #tableLoyalty tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;padding:12px;border:1px solid var(--border);border-radius:var(--rmd);margin-bottom:8px;background:var(--sur2);}
+  #tableLoyalty td{padding:0;border:none;font-size:.8rem;}
+  #tableLoyalty td:nth-child(1){grid-column:1/-1;font-weight:800;font-size:.9rem;}
+  #tableLoyalty td:nth-child(2){font-family:var(--fd);font-weight:800;color:var(--accent);font-size:1rem;}
+  #tableLoyalty td:nth-child(3){font-family:var(--fm);font-size:.72rem;text-align:right;}
+  #tableLoyalty td:nth-child(4){font-family:var(--fm);font-size:.72rem;color:var(--text3);}
+  #tableLoyalty td:nth-child(5){grid-column:1/-1;margin-top:4px;}
 
   /* ── DETTES : cartes ── */
   #tableDebts{min-width:unset !important;}
@@ -525,38 +548,10 @@ footer{background:var(--surface);border-top:1px solid var(--border);text-align:c
 </style>
 
 <script>
-/* ── SERVICE WORKER REGISTRATION (PWA) ── */
-if ('serviceWorker' in navigator) {
-  const swCode = `
-const CACHE = 'smp-v76';
-const CDN_CACHE = 'smp-cdn-v76';
-const CDN_HOSTS = ['cdn.jsdelivr.net','fonts.googleapis.com','fonts.gstatic.com'];
-const ASSETS = [location.href];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
-});
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request).then(cached => {
-    const net = fetch(e.request).then(res => {
-      if (res && res.status === 200 && e.request.url.startsWith(self.location.origin)) {
-        caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-      }
-      return res;
-    }).catch(() => cached);
-    return cached || net;
-  }));
-});
-`;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl, { scope: './' })
-    .then(r => console.info('[SMP PWA] Service Worker enregistré', r.scope))
-    .catch(e => console.warn('[SMP PWA] SW non disponible:', e));
-}
+/* ── PWA — Pas de Service Worker Blob (incompatible WebView Android) ──
+   L'app fonctionne hors ligne via localStorage.
+   Les ressources CDN sont chargées avec un fallback gracieux.      ── */
+console.info('[SMP PWA] Mode localStorage — fonctionne hors ligne');
 </script>
 </head>
 <body>
@@ -574,9 +569,9 @@ self.addEventListener('fetch', e => {
       <div style="font-family:var(--fm);font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center">Qui êtes-vous ?</div>
       <div id="accounts-list"></div>
       <div style="display:flex;gap:12px;justify-content:center">
-        <button onclick="Auth.showDemoMode()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Mode démo</button>
+        <button onclick="Auth.showDemoMode()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline" data-i18n="btn_demo">Mode démo</button>
         <span style="color:var(--text3);font-size:.7rem">·</span>
-        <button onclick="RecoveryManager.show()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Code oublié ?</button>
+        <button onclick="RecoveryManager.show()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline" data-i18n="btn_forgot_pin">Code oublié ?</button>
       </div>
     </div>
 
@@ -627,7 +622,7 @@ self.addEventListener('fetch', e => {
     <div id="recovery-error" style="font-size:.78rem;color:var(--danger);min-height:18px;margin-bottom:12px;text-align:center"></div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" style="flex:1" onclick="RecoveryManager.hide()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1" onclick="RecoveryManager.verify()">Accéder</button>
+      <button class="btn btn-primary" style="flex:1" onclick="RecoveryManager.verify()" data-i18n="btn_access">Accéder</button>
     </div>
     <div style="margin-top:14px;font-size:.72rem;color:var(--text3);text-align:center;font-family:var(--fm)">Le code maître vous a été affiché lors de la première connexion</div>
   </div>
@@ -658,7 +653,7 @@ self.addEventListener('fetch', e => {
         <div style="font-size:.82rem;color:var(--text2);margin-top:8px;line-height:1.6">Configurons votre boutique en 3 étapes rapides pour que tout soit prêt dès maintenant.</div>
       </div>
       <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">Nom de votre boutique *</label>
+        <label class="form-label"><span data-i18n="lbl_shop_name">Nom de votre boutique</span> *</label>
         <input type="text" id="ob-shop-name" placeholder="Ex: Épicerie Eze, Boutique Grace..." maxlength="60">
       </div>
       <div class="form-group" style="margin-bottom:16px">
@@ -938,7 +933,7 @@ self.addEventListener('fetch', e => {
         </div>
         <div style="flex:1;min-width:160px">
           <label class="form-label">Nom du client (optionnel)</label>
-          <input type="text" id="def-client" placeholder="Client commun à toutes les lignes">
+          <input type="text" id="def-client" placeholder="Client commun à toutes les lignes" data-i18n-placeholder="ph_deferred_client">
         </div>
       </div>
       <div id="def-date-info" style="font-family:var(--fm);font-size:.72rem;color:var(--text3);margin-top:8px;min-height:16px"></div>
@@ -1231,20 +1226,20 @@ CREATE POLICY "public_access" ON smp_data
       ▾ Plus <span id="nav-more-badge" style="display:none;background:var(--danger);color:#fff;font-family:var(--fm);font-size:.55rem;font-weight:800;padding:1px 5px;border-radius:10px;margin-left:3px;vertical-align:middle"></span>
     </button>
     <div id="nav-dropdown">
-      <div class="nav-drop-item" onclick="RestockReport.open();NavDesktop.close()"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Approvisionnement</div>
+      <div class="nav-drop-item" id="drop-restock" onclick="RestockReport.open();NavDesktop.close()" id="drop-restock"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> Approvisionnement</div>
       <div class="nav-drop-sep"></div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('debts')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span> Dettes</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('expenses')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg></span> Dépenses</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('cashreport')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span> Caisse</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('commissions')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span> Commissions</div>
+      <div class="nav-drop-item" id="drop-debts" onclick="NavDesktop.go('debts')" id="drop-debts"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span> Dettes</div>
+      <div class="nav-drop-item" id="drop-expenses" onclick="NavDesktop.go('expenses')" id="drop-expenses"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg></span> Dépenses</div>
+      <div class="nav-drop-item" id="drop-cashreport" onclick="NavDesktop.go('cashreport')" id="drop-cashreport"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span> Caisse</div>
+      <div class="nav-drop-item" id="drop-commissions" onclick="NavDesktop.go('commissions')" id="drop-commissions"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span> Commissions</div>
       <div class="nav-drop-sep"></div>
       <div class="nav-drop-item" onclick="NavDesktop.go('users')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Équipe</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('suppliers')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span> Fournisseurs</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('loyalty')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Fidélité</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('returns')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></span> Retours</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('objectives')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span> Objectifs</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('multishop')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Boutiques</div>
-      <div class="nav-drop-item" onclick="NavDesktop.go('categories')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> Catégories</div>
+      <div class="nav-drop-item" id="drop-suppliers" onclick="NavDesktop.go('suppliers')" id="drop-suppliers"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span> Fournisseurs</div>
+      <div class="nav-drop-item" id="drop-loyalty" onclick="NavDesktop.go('loyalty')" id="drop-loyalty"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Fidélité</div>
+      <div class="nav-drop-item" id="drop-returns" onclick="NavDesktop.go('returns')" id="drop-returns"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></span> Retours</div>
+      <div class="nav-drop-item" id="drop-objectives" onclick="NavDesktop.go('objectives')" id="drop-objectives"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span> Objectifs</div>
+      <div class="nav-drop-item" id="drop-multishop" onclick="NavDesktop.go('multishop')" id="drop-multishop"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Boutiques</div>
+      <div class="nav-drop-item" id="drop-categories" onclick="NavDesktop.go('categories')" id="drop-categories"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> Catégories</div>
       <div class="nav-drop-sep"></div>
       <div class="nav-drop-item" onclick="NavDesktop.go('ai')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg></span> IA</div>
       <div class="nav-drop-item" onclick="NavDesktop.go('bizimport')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span> Import IA</div>
@@ -1294,10 +1289,10 @@ CREATE POLICY "public_access" ON smp_data
 
   <!-- KPIs du jour -->
   <div class="stats-grid" style="margin-bottom:16px">
-    <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label">CA Aujourd'hui</div><div class="stat-value" id="dash-ca-today">0</div><div class="stat-sub" id="dash-ca-sub">0 ventes</div></div>
-    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Profit du Jour</div><div class="stat-value" id="dash-pft-today">0</div><div class="stat-sub" id="dash-margin-sub">Marge : 0%</div></div>
-    <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label">Dettes en Cours</div><div class="stat-value" id="dash-debt">0</div><div class="stat-sub" id="dash-debt-clients">0 client(s)</div></div>
-    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label">Stock en Alerte</div><div class="stat-value" id="dash-alerts">0</div><div class="stat-sub">Produits à réappro</div></div>
+    <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label" id="dash-ca-label">CA Aujourd'hui</div><div class="stat-value" id="dash-ca-today">0</div><div class="stat-sub" id="dash-ca-sub">0 ventes</div></div>
+    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label" id="dash-profit-label">Profit du Jour</div><div class="stat-value" id="dash-pft-today">0</div><div class="stat-sub" id="dash-margin-sub">Marge : 0%</div></div>
+    <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label" id="dash-debt-label">Dettes en Cours</div><div class="stat-value" id="dash-debt">0</div><div class="stat-sub" id="dash-debt-clients">0 client(s)</div></div>
+    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label" id="dash-alerts-label">Stock en Alerte</div><div class="stat-value" id="dash-alerts">0</div><div class="stat-sub">Produits à réappro</div></div>
   </div>
 
   <!-- Conseil IA du jour -->
@@ -1353,7 +1348,7 @@ CREATE POLICY "public_access" ON smp_data
 <!-- VENTES -->
 <section id="sales" class="page">
   <div class="page-header">
-    <h1 class="page-title">Caisse <span>Enregistreuse</span></h1>
+    <h1 class="page-title" data-i18n="sales_title">Caisse <span>Enregistreuse</span></h1>
     <button class="btn btn-ghost btn-sm admin-only" onclick="DeferredSales.open()"
       style="border-color:var(--warning);color:var(--warning)"
       title="Saisir des ventes d'un jour passé — comme dans un cahier">
@@ -1361,20 +1356,20 @@ CREATE POLICY "public_access" ON smp_data
     </button>
   </div>
   <div class="card">
-    <div class="card-title">Nouvelle Vente</div>
+    <div class="card-title" data-i18n="card_new_sale">Nouvelle Vente</div>
     <div class="form-grid">
-      <div class="form-group"><label class="form-label">Article</label><select id="s-item" onchange="Sales.syncFields()"></select></div>
-      <div class="form-group"><label class="form-label">Quantité</label><input type="number" id="s-qty" value="1" min="1" inputmode="numeric" oninput="Sales.validate()"></div>
-      <div class="form-group"><label class="form-label">Prix Unitaire <button type="button" onclick="Sales.toggleDiscount()" style="background:none;border:none;color:var(--warning);font-size:.65rem;cursor:pointer;font-family:var(--fm);text-decoration:underline;padding:0;margin-left:6px" id="s-discount-toggle">± Modifier le prix</button></label><input type="number" id="s-price" inputmode="decimal" oninput="Sales.validate()"></div>
+      <div class="form-group"><label class="form-label" data-i18n="lbl_name">Article</label><select id="s-item" onchange="Sales.syncFields()"></select></div>
+      <div class="form-group"><label class="form-label" data-i18n="lbl_qty">Quantité</label><input type="number" id="s-qty" value="1" min="1" inputmode="numeric" oninput="Sales.validate()"></div>
+      <div class="form-group"><label class="form-label" data-i18n="lbl_sell">Prix Unitaire <button type="button" onclick="Sales.toggleDiscount()" style="background:none;border:none;color:var(--warning);font-size:.65rem;cursor:pointer;font-family:var(--fm);text-decoration:underline;padding:0;margin-left:6px" id="s-discount-toggle">± Modifier le prix</button></label><input type="number" id="s-price" inputmode="decimal" oninput="Sales.validate()"></div>
       <div class="form-group" id="s-discount-wrap" style="display:none">
         <label class="form-label" style="color:var(--warning)">Prix réel de vente <span style="font-size:.6rem">(modifié)</span></label>
-        <input type="number" id="s-real-price" inputmode="decimal" oninput="Sales.validate()" placeholder="Prix négocié...">
+        <input type="number" id="s-real-price" inputmode="decimal" oninput="Sales.validate()" placeholder="Prix négocié..." data-i18n-placeholder="ph_real_price">
         <div style="margin-top:4px">
-          <input type="text" id="s-discount-reason" placeholder="Motif : fidélité, négociation... (optionnel)" style="font-size:.72rem;padding:6px 10px">
+          <input type="text" id="s-discount-reason" placeholder="Motif : fidélité, négociation... (optionnel)" data-i18n-placeholder="ph_discount_reason" style="font-size:.72rem;padding:6px 10px">
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Montant Payé</label><input type="number" id="s-paid" inputmode="decimal" placeholder="Vide = tout payé" oninput="Sales.validate()"></div>
-      <div class="form-group"><label class="form-label">Nom Client (dettes)</label><input type="text" id="s-client" placeholder="—"></div>
+      <div class="form-group"><label class="form-label" data-i18n="lbl_paid">Montant Payé</label><input type="number" id="s-paid" inputmode="decimal" placeholder="Vide = tout payé" data-i18n-placeholder="ph_paid" oninput="Sales.validate()"></div>
+      <div class="form-group"><label class="form-label" data-i18n="lbl_client">Nom Client (dettes)</label><input type="text" id="s-client" placeholder="—"></div>
       <div class="form-group" id="s-change-wrap" style="display:none">
         <label class="form-label">Rendu Monnaie</label>
         <div id="s-change-display" style="font-family:var(--fd);font-size:1.4rem;font-weight:800;color:var(--accent);padding:10px 14px;background:rgba(0,232,122,.08);border:1.5px solid var(--accent);border-radius:var(--rmd);text-align:center">0 F</div>
@@ -1406,7 +1401,7 @@ CREATE POLICY "public_access" ON smp_data
 
 <!-- STOCK -->
 <section id="stock" class="page">
-  <div class="page-header"><h1 class="page-title">Gestion <span>Inventaire</span></h1></div>
+  <div class="page-header"><h1 class="page-title" data-i18n="stock_title">Gestion <span>Inventaire</span></h1></div>
   <div class="stats-grid">
     <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label">Valeur Achat</div><div class="stat-value" id="v-stock-buy">0</div><div class="stat-sub">Coût immobilisé</div></div>
     <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Valeur Vente</div><div class="stat-value" id="v-stock-sell">0</div><div class="stat-sub">Potentiel revenus</div></div>
@@ -1414,7 +1409,7 @@ CREATE POLICY "public_access" ON smp_data
     <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label">Références</div><div class="stat-value" id="v-stock-count">0</div><div class="stat-sub">Produits enregistrés</div></div>
   </div>
   <div class="card">
-    <div class="card-title">Ajouter / Réapprovisionner</div>
+    <div class="card-title" data-i18n="card_add_stock">Ajouter / Réapprovisionner</div>
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Nom du Produit *</label><input type="text" id="i-name"></div>
       <div class="form-group"><label class="form-label">Code-barres</label><input type="text" id="i-code"></div>
@@ -1427,7 +1422,7 @@ CREATE POLICY "public_access" ON smp_data
       <div class="form-group"><label class="form-label">Fournisseur</label><select id="i-supplier"><option value="">— Aucun —</option></select></div>
       <div class="form-group"><label class="form-label">TVA %</label><input type="number" id="i-tva" placeholder="0" min="0" max="100" value="0" inputmode="numeric"></div>
     </div>
-    <button class="btn btn-primary mt-14" onclick="Stock.add()">+ AJOUTER AU STOCK</button>
+    <button class="btn btn-primary mt-14" onclick="Stock.add()" data-i18n="add_stock_btn">+ AJOUTER AU STOCK</button>
   </div>
   <div class="card">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -1448,7 +1443,7 @@ CREATE POLICY "public_access" ON smp_data
 <!-- ANALYTICS -->
 <section id="analytics" class="page">
   <div class="page-header">
-    <h1 class="page-title">Indicateurs <span>Performance</span></h1>
+    <h1 class="page-title" data-i18n="analytics_title">Indicateurs <span>Performance</span></h1>
     <div class="ph-controls">
       <input type="number" id="cash-init" placeholder="Fond de caisse" inputmode="decimal" onchange="Analytics.updateCash()">
       <select id="timePeriod" onchange="Analytics.refresh()">
@@ -1474,7 +1469,7 @@ CREATE POLICY "public_access" ON smp_data
 <!-- DETTES -->
 <section id="debts" class="page">
   <div class="page-header">
-    <h1 class="page-title">Dettes <span>Clients</span></h1>
+    <h1 class="page-title" data-i18n="debts_title">Dettes <span>Clients</span></h1>
     <button class="btn btn-info btn-sm" onclick="Printer.exportDebtsPDF()">📄 Export PDF</button>
   </div>
   <div class="stats-grid">
@@ -1509,7 +1504,7 @@ CREATE POLICY "public_access" ON smp_data
 
 <!-- ÉQUIPE -->
 <section id="users" class="page">
-  <div class="page-header"><h1 class="page-title">Gestion <span>Équipe</span></h1></div>
+  <div class="page-header"><h1 class="page-title" data-i18n="team_title">Gestion <span>Équipe</span></h1></div>
   <div class="card">
     <div class="card-title">Créer un Compte</div>
     <div class="form-grid">
@@ -2397,7 +2392,7 @@ CREATE POLICY "public_access" ON smp_data
       </div>
       <div id="sm-cart"></div>
       <div class="sm-cart-footer">
-        <input type="text" id="sm-client" placeholder="Nom du client (optionnel)"
+        <input type="text" id="sm-client" placeholder="Nom du client (optionnel)" data-i18n-placeholder="ph_client"
           style="margin-bottom:8px;font-size:.82rem">
         <input type="number" id="sm-paid" inputmode="decimal"
           placeholder="Montant payé (vide = tout payé)"
@@ -2877,9 +2872,97 @@ const I18n = {
       ai_chat:'💬 Assistant Conversationnel',
       ai_anomalies:'🔍 Anomalies Détectées',
       ai_send:'Envoyer',
-      ai_placeholder:'Ex: Quel est mon produit le plus rentable ?',
+      ai_placeholder:"Ex: Quel est mon produit le plus rentable ?",
       ai_thinking:'Analyse en cours...',
       export_pdf:'📄 Export PDF',
+      nav_history:'Historique', nav_debts_full:"Dettes Clients",
+      nav_expenses:'Dépenses', nav_cashreport:'Caisse',
+      nav_commissions:'Commissions', nav_returns:'Retours',
+      nav_suppliers:'Fournisseurs', nav_loyalty:'Fidélité',
+      nav_objectives:'Objectifs', nav_categories:'Catégories',
+      nav_multishop:'Multi-Boutiques', nav_bizimport:'Import',
+      nav_restock:'Approvisionnement',
+      btn_add_sale:'Nouvelle Vente', btn_validate:'Valider',
+      btn_cancel:'Annuler', btn_save:'Sauvegarder',
+      btn_add:'Ajouter', btn_edit:'Modifier', btn_delete:'Supprimer',
+      btn_print:'Imprimer', btn_export:'Exporter',
+      btn_restore:'Restaurer', btn_reset:'Réinitialiser',
+      btn_test:'Tester', btn_configure:'Configurer',
+      lbl_name:'Nom', lbl_price:'Prix', lbl_qty:'Quantité',
+      lbl_buy:'Prix Achat', lbl_sell:'Prix Vente',
+      lbl_client:'Client', lbl_paid:'Montant Payé',
+      lbl_date:'Date', lbl_total:'Total',
+      lbl_profit:'Profit', lbl_debt:'Dette',
+      lbl_status:'Statut', lbl_category:'Catégorie',
+      lbl_description:'Description', lbl_phone:'Téléphone',
+      lbl_threshold:'Seuil Alerte',
+      lbl_barcode:'Code-barres',
+      ph_search:'Rechercher...',
+      ph_client:"Nom du client (optionnel)",
+      ph_paid:"Vide = tout payé",
+      ph_amount:'Montant',
+      dashboard_greeting_am:'Bonjour',
+      dashboard_greeting_pm:'Bon après-midi',
+      dashboard_greeting_ev:'Bonsoir',
+      kpi_ca:"CA Aujourd'hui",
+      kpi_profit:"Profit du Jour",
+      kpi_debts:"Dettes en Cours",
+      kpi_alerts:'Stock en Alerte',
+      section_quick_actions:'Actions Rapides',
+      section_last_sales:'Ventes Récentes',
+      deferred_title:'Saisie Différée',
+      deferred_subtitle:"Enregistrez les ventes notées dans votre cahier",
+      deferred_date:'Date des ventes',
+      deferred_seller:'Vendeur',
+      deferred_add_line:'+ Ajouter une ligne',
+      deferred_submit:'Enregistrer tout',
+      eod_title:'Résumé Fin de Journée',
+      restock_title:'Rapport Approvisionnement',
+      restock_out:'En rupture',
+      restock_low:'Stock faible',
+      restock_cost:'Coût estimé',
+      cash_title:'Rapport de Caisse',
+      cash_opening:"Fond d'ouverture",
+      cash_counted:'Montant compté',
+      cash_theoretical:'Caisse théorique',
+      cash_difference:'Écart',
+      comm_title:'Commissions Vendeurs',
+      comm_rate:'Taux de commission',
+      comm_base:'Base de calcul',
+      comm_base_profit:"% du bénéfice brut",
+      comm_base_ca:'% du CA',
+      comm_mark_paid:'Marquer payé',
+      returns_title:'Retours Clients',
+      returns_today:"Retours aujourd'hui",
+      returns_debt_cancel:'Dettes annulées',
+      loyalty_title:'Programme Fidélité',
+      loyalty_points:'Points',
+      loyalty_level:'Niveau',
+      loyalty_discount:'Remise',
+      expenses_title:'Dépenses',
+      expenses_desc:'Description',
+      expenses_amount:'Montant',
+      expenses_category:'Catégorie',
+      history_title:'Historique Complet',
+      history_filter:'Filtrer',
+      history_seller:'Vendeur',
+      settings_pin:'Modifier mon PIN',
+      settings_pin_new:'Nouveau PIN',
+      settings_pin_confirm:'Confirmer PIN',
+      settings_eod:'Résumé Fin de Journée',
+      settings_eod_time:"Heure",
+      settings_comm:'Commissions Vendeurs',
+      settings_comm_enable:'Activer les commissions',
+      about_version:'Version',
+      about_master:'Code Maître',
+      sales_title:'Caisse Enregistreuse',
+      stock_title:'Gestion Inventaire',
+      analytics_title:'Indicateurs Performance',
+      debts_title:'Dettes Clients',
+      team_title:'Gestion Équipe',
+      add_stock_btn:'+ AJOUTER AU STOCK',
+      create_account_btn:'Créer le compte',
+      about_copyright:'Tous droits réservés',
     },
     en: {
       nav_sales:'Sales', nav_stock:'Stock', nav_analytics:'Analytics',
@@ -2931,9 +3014,97 @@ const I18n = {
       ai_chat:'💬 Conversational Assistant',
       ai_anomalies:'🔍 Detected Anomalies',
       ai_send:'Send',
-      ai_placeholder:'E.g.: What is my most profitable product?',
+      ai_placeholder:"E.g.: What is my most profitable product?",
       ai_thinking:'Analyzing your data...',
       export_pdf:'📄 Export PDF',
+      nav_history:'History', nav_debts_full:'Client Debts',
+      nav_expenses:'Expenses', nav_cashreport:'Cash Report',
+      nav_commissions:'Commissions', nav_returns:'Returns',
+      nav_suppliers:'Suppliers', nav_loyalty:'Loyalty',
+      nav_objectives:'Objectives', nav_categories:'Categories',
+      nav_multishop:'Multi-Store', nav_bizimport:'Import',
+      nav_restock:'Restock',
+      btn_add_sale:'New Sale', btn_validate:'Validate',
+      btn_cancel:'Cancel', btn_save:'Save',
+      btn_add:'Add', btn_edit:'Edit', btn_delete:'Delete',
+      btn_print:'Print', btn_export:'Export',
+      btn_restore:'Restore', btn_reset:'Reset',
+      btn_test:'Test', btn_configure:'Configure',
+      lbl_name:'Name', lbl_price:'Price', lbl_qty:'Quantity',
+      lbl_buy:'Purchase Price', lbl_sell:'Sale Price',
+      lbl_client:'Client', lbl_paid:'Amount Paid',
+      lbl_date:'Date', lbl_total:'Total',
+      lbl_profit:'Profit', lbl_debt:'Debt',
+      lbl_status:'Status', lbl_category:'Category',
+      lbl_description:'Description', lbl_phone:'Phone',
+      lbl_threshold:'Alert Threshold',
+      lbl_barcode:'Barcode',
+      ph_search:'Search...',
+      ph_client:'Client name (optional)',
+      ph_paid:'Leave blank if fully paid',
+      ph_amount:'Amount',
+      dashboard_greeting_am:'Good morning',
+      dashboard_greeting_pm:'Good afternoon',
+      dashboard_greeting_ev:'Good evening',
+      kpi_ca:"Revenue Today",
+      kpi_profit:"Today's Profit",
+      kpi_debts:'Outstanding Debts',
+      kpi_alerts:'Stock Alerts',
+      section_quick_actions:'Quick Actions',
+      section_last_sales:'Recent Sales',
+      deferred_title:'Deferred Entry',
+      deferred_subtitle:'Record sales from your notebook',
+      deferred_date:'Sale Date',
+      deferred_seller:'Seller',
+      deferred_add_line:'+ Add line',
+      deferred_submit:'Save all',
+      eod_title:'End of Day Summary',
+      restock_title:'Restocking Report',
+      restock_out:'Out of Stock',
+      restock_low:'Low Stock',
+      restock_cost:'Estimated Cost',
+      cash_title:'Cash Register Report',
+      cash_opening:'Opening Balance',
+      cash_counted:'Counted Amount',
+      cash_theoretical:'Theoretical Cash',
+      cash_difference:'Difference',
+      comm_title:'Seller Commissions',
+      comm_rate:'Commission Rate',
+      comm_base:'Calculation Base',
+      comm_base_profit:'% of Gross Profit',
+      comm_base_ca:'% of Revenue',
+      comm_mark_paid:'Mark as Paid',
+      returns_title:'Customer Returns',
+      returns_today:"Today's Returns",
+      returns_debt_cancel:'Cancelled Debts',
+      loyalty_title:'Loyalty Program',
+      loyalty_points:'Points',
+      loyalty_level:'Level',
+      loyalty_discount:'Discount',
+      expenses_title:'Expenses',
+      expenses_desc:'Description',
+      expenses_amount:'Amount',
+      expenses_category:'Category',
+      history_title:'Complete History',
+      history_filter:'Filter',
+      history_seller:'Seller',
+      settings_pin:'Change My PIN',
+      settings_pin_new:'New PIN',
+      settings_pin_confirm:'Confirm PIN',
+      settings_eod:'End of Day Summary',
+      settings_eod_time:'Time',
+      settings_comm:'Seller Commissions',
+      settings_comm_enable:'Enable commissions',
+      about_version:'Version',
+      about_master:'Master Code',
+      sales_title:'Cash Register',
+      stock_title:'Inventory Management',
+      analytics_title:'Performance Analytics',
+      debts_title:'Client Debts',
+      team_title:'Team Management',
+      add_stock_btn:'+ ADD TO STOCK',
+      create_account_btn:'Create Account',
+      about_copyright:'All rights reserved',
     }
   },
   t(key) { return this._d[this._lang]?.[key] ?? this._d['fr']?.[key] ?? key; },
@@ -2975,10 +3146,11 @@ const I18n = {
 
     // ── Bottom nav mobile ──
     const botTextMap = {
-      "UI.switchTab('sales')":     this.t('nav_sales'),
-      "UI.switchTab('stock')":     this.t('nav_stock'),
-      "UI.switchTab('analytics')": this.t('nav_analytics'),
-      "UI.switchTab('dashboard')": lang === 'en' ? 'Home' : 'Accueil',
+      "UI.switchTab('sales')":      this.t('nav_sales'),
+      "UI.switchTab('stock')":      this.t('nav_stock'),
+      "UI.switchTab('analytics')":  this.t('nav_analytics'),
+      "UI.switchTab('dashboard')":  lang === 'en' ? 'Home' : 'Accueil',
+      "MobNav.openDrawer()":        lang === 'en' ? 'More' : 'Plus',
     };
     document.querySelectorAll('#bot-nav .bot-tab').forEach(el => {
       const onclick = el.getAttribute('onclick') || '';
@@ -3129,12 +3301,12 @@ const Settings = {
   applyFontSize() { const sz=Utils.int(document.getElementById('set-font-size')?.value)||16; this.data.fontSize=sz; document.documentElement.style.fontSize=sz+'px'; this.save(); },
   setLang(lang)   { I18n.setLang(lang); },
   saveIdentity()  { this.data.shopName=document.getElementById('set-shop-name')?.value.trim()||''; this.data.shopPhone=document.getElementById('set-shop-phone')?.value.trim()||''; this.data.currency=document.getElementById('set-currency')?.value||'F'; this._updateBranding(); this.save(); UI.toast('Identité sauvegardée','success'); },
-  saveBehavior()  { this.data.confirmSale=document.getElementById('set-confirm-sale')?.checked||false; this.data.warnMargin=document.getElementById('set-warn-margin')?.checked||false; this.data.resetQty=document.getElementById('set-reset-qty')?.checked||false; this.data.debtThreshold=Utils.num(document.getElementById('set-debt-threshold')?.value)||10000; this.data.eodEnabled=document.getElementById('set-eod-enabled')?.checked||false; this.data.eodHour=Utils.int(document.getElementById('set-eod-hour')?.value)||20; this.data.eodMinute=Utils.int(document.getElementById('set-eod-minute')?.value)||0; this.save(); EODSummary.schedule(); UI.toast('Paramètres sauvegardés','success'); },
+  saveBehavior()  { this.data.confirmSale=document.getElementById('set-confirm-sale')?.checked||false; this.data.warnMargin=document.getElementById('set-warn-margin')?.checked||false; this.data.resetQty=document.getElementById('set-reset-qty')?.checked||false; this.data.debtThreshold=Utils.num(document.getElementById('set-debt-threshold')?.value)||10000; this.data.eodEnabled=document.getElementById('set-eod-enabled')?.checked||false; this.data.eodHour=Utils.int(document.getElementById('set-eod-hour')?.value)||20; this.data.eodMinute=Utils.int(document.getElementById('set-eod-minute')?.value)||0; this.save(); EODSummary.schedule(); UI.toast(I18n.t('toast_settings_saved'),'success'); },
   saveCommissions() {
     this.data.commissionsEnabled = document.getElementById('set-comm-enabled')?.checked || false;
     this.data.commissionsBase    = document.getElementById('set-comm-base')?.value || 'profit';
     this.save();
-    UI.toast('Paramètres commissions sauvegardés', 'success');
+    UI.toast(I18n.t('toast_settings_saved'),'success');
     // Masquer/afficher l'onglet commissions dans le drawer selon l'état
     Commissions.render();
   },
@@ -3721,7 +3893,7 @@ const UI = {
     if (id === 'objectives' && typeof Objectives !== 'undefined') Objectives.renderProgress();
     window.scrollTo({top:0, behavior:'smooth'});
   },
-  renderAll() { this.renderSales(); this.renderStock(); this.renderUsers(); this.updateItemSelect(); Alerts.generate(); },
+  renderAll() { this.renderSales(); this.renderStock(); this.renderUsers(); this.updateItemSelect(); this.updateCategorySelect(); Alerts.generate(); },
   renderSales() {
     const tbody = document.querySelector('#tableSales tbody'); if(!tbody) return;
     const today = new Date().toDateString();
@@ -3800,6 +3972,25 @@ const UI = {
       : '<option value="">— Aucun produit disponible —</option>';
     if (cur) sel.value = cur;
     Sales.syncFields();
+  },
+
+  updateCategorySelect() {
+    // Peupler tous les selects de catégories dans l'app
+    const selIds = ['i-category', 'edit-stock-cat'];
+    const cats   = DB.data.categories || [];
+    // Normaliser : strings ou objets
+    const names  = cats.map(c => typeof c === 'string' ? c : (c.name || ''));
+    const unique = [...new Set(['Autre', ...names.filter(Boolean)])];
+    selIds.forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = unique
+        .map(n => `<option value="${Utils.esc(n)}">${Utils.esc(n)}</option>`)
+        .join('');
+      // Restaurer la valeur courante si elle existe encore
+      if (cur && unique.includes(cur)) sel.value = cur;
+    });
   }
 };
 
@@ -3830,12 +4021,18 @@ const Sales = {
 
   syncFields() {
     const item = DB.data.items.find(i=>i.id===document.getElementById('s-item')?.value);
-    if (item) { const el=document.getElementById('s-price'); if(el) el.value=item.sell; }
+    if (item) {
+      const priceEl = document.getElementById('s-price');
+      if (priceEl) priceEl.value = item.sell;
+      // S'assurer que la quantité est au moins 1
+      const qtyEl = document.getElementById('s-qty');
+      if (qtyEl && (!qtyEl.value || parseInt(qtyEl.value) <= 0)) qtyEl.value = '1';
+    }
     this.validate();
   },
   validate() {
     const id    = document.getElementById('s-item')?.value;
-    const qty   = Utils.int(document.getElementById('s-qty')?.value);
+    const qty   = Utils.int(document.getElementById('s-qty')?.value) || 0;
     const basePrice = Utils.num(document.getElementById('s-price')?.value);
     // Prix réel = prix négocié si champ visible, sinon prix du stock
     const realPriceEl = document.getElementById('s-real-price');
@@ -3910,14 +4107,16 @@ const Sales = {
     DB.save(); Cloud.pushAll();
     const pEl=document.getElementById('s-paid'); if(pEl) pEl.value='';
     const cEl=document.getElementById('s-client'); if(cEl) cEl.value='';
-    if (Settings.data.resetQty) { const qEl=document.getElementById('s-qty'); if(qEl) qEl.value='1'; }
+    const qEl=document.getElementById('s-qty'); if(qEl) qEl.value='1';
+    // Toujours re-valider après reset pour réactiver le bouton
+    setTimeout(() => Sales.validate(), 50);
     // Réinitialiser le champ remise
     const rWrap = document.getElementById('s-discount-wrap'); if(rWrap) rWrap.style.display='none';
     const rEl   = document.getElementById('s-real-price');    if(rEl)   rEl.value='';
     const rsnEl = document.getElementById('s-discount-reason'); if(rsnEl) rsnEl.value='';
     const rtgl  = document.getElementById('s-discount-toggle'); if(rtgl)  rtgl.textContent='± Modifier le prix';
     UI.renderAll();
-    UI.toast('Vente enregistrée avec succès','success');
+    UI.toast(I18n.t('toast_sale_ok'),'success');
   },
   async cancel(id) {
     if (!Auth.isAdmin()) return UI.toast("Accès réservé à l'admin",'danger');
@@ -3988,9 +4187,12 @@ const Stock = {
     const catSel = document.getElementById('edit-stock-cat');
     if (catSel) {
       const cats = DB.data.categories || [];
-      catSel.innerHTML = cats.length
-        ? cats.map(cat => `<option value="${Utils.esc(cat.name)}" ${cat.name===item.category?'selected':''}>${Utils.esc(cat.name)}</option>`).join('')
-        : '<option value="Autre">Autre</option>';
+      // Les catégories peuvent être des strings ou des objets {name:...}
+      const catNames = cats.map(c => typeof c === 'string' ? c : (c.name || 'Autre'));
+      const uniqueCats = [...new Set(['Autre', ...catNames])];
+      catSel.innerHTML = uniqueCats
+        .map(name => `<option value="${Utils.esc(name)}" ${name===item.category?'selected':''}>${Utils.esc(name)}</option>`)
+        .join('');
     }
     if (ov) { ov.style.display = 'flex'; setTimeout(() => document.getElementById('edit-stock-name')?.focus(), 100); }
   },
@@ -4030,7 +4232,7 @@ const Stock = {
   },
 
   async remove(id) {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     const item = DB.data.items.find(i=>i.id===id); if(!item) return;
     const linked = DB.activeSales().filter(s=>s.itemId===id).length;
     if (!await SmpModal.confirm(`Supprimer "${item.name}"${linked>0?' ('+linked+' ventes liées)':''}? Cette action est irréversible.`, {title:'Supprimer le produit', icon:'🗑️', okLabel:'Supprimer', okClass:'btn-danger'})) return;
@@ -4234,7 +4436,7 @@ const Debts = {
   markPaid(saleId) {
     const sale=DB.data.sales.find(s=>s.id===saleId); if(!sale) return;
     sale.debt=0; DB.save(); Cloud.pushAll();
-    UI.toast('Marqué comme payé','success');
+    UI.toast(I18n.t('toast_paid'),'success');
     this.render(); if(this._current) this.showDetail(this._current);
   },
   markAllPaid() {
@@ -4350,7 +4552,7 @@ const Users = {
     ['u-name','u-pin','u-pin2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   },
   async remove(id) {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     if (id===Auth.currentUser?.id) return UI.toast('Impossible de supprimer votre propre compte','danger');
     const t=DB.data.users.find(u=>u.id===id);
     if (DB.data.users.filter(u=>u.role==='admin').length<=1&&t?.role==='admin') return UI.toast('Dernier admin — impossible','danger');
@@ -4763,7 +4965,7 @@ const DataManager = {
     reader.readAsText(file); event.target.value='';
   },
   async resetSystem() {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     if (!await SmpModal.confirm('Toutes vos données (ventes, stock, clients) seront définitivement supprimées. Un backup sera créé automatiquement avant la suppression.', {title:'⚠️ Réinitialisation totale', icon:'🚨', okLabel:'Supprimer tout', okClass:'btn-danger'})) return;
     // Auto-backup before reset
     try {
@@ -5501,7 +5703,7 @@ const Categories = {
   },
 
   remove(name) {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     if (this.defaults.includes(name)) return UI.toast('Catégorie par défaut non supprimable','warning');
     DB.data.categories = (DB.data.categories || this.defaults).filter(c => c !== name);
     // Remove category from products
@@ -5578,7 +5780,7 @@ const Suppliers = {
   },
 
   async remove(id) {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     if (!await SmpModal.confirm('Supprimer ce fournisseur et tout son historique de commandes ?', {title:'Supprimer le fournisseur', icon:'🏭', okLabel:'Supprimer', okClass:'btn-danger'})) return;
     DB.data.suppliers = (DB.data.suppliers||[]).filter(s => s.id !== id);
     DB.save();
@@ -5662,7 +5864,7 @@ const MultiShop = {
   },
 
   async remove(id) {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     if (this.getShops().length <= 1) return UI.toast('Au moins une boutique requise','warning');
     if (!await SmpModal.confirm('Supprimer cette boutique ? Cette action est irréversible.', {title:'Supprimer la boutique', icon:'🏪', okLabel:'Supprimer', okClass:'btn-danger'})) return;
     DB.data.shops = this.getShops().filter(s => s.id !== id);
@@ -5703,7 +5905,7 @@ const MultiShop = {
 const Returns = {
 
   async process(saleId) {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     const sale = DB.data.sales.find(s => s.id === saleId);
     if (!sale || sale.deleted || sale.returned) return UI.toast('Vente introuvable ou déjà retournée','warning');
     if (!await SmpModal.confirm(`Enregistrer le retour de "${sale.itemName}" ? Le stock sera restauré et la vente annulée.`, {title:'Retour client', icon:'↩️', okLabel:'Confirmer le retour', okClass:'btn-warning'})) return;
@@ -5747,7 +5949,7 @@ const Returns = {
     Cloud.pushAll();
     UI.renderAll();
     Dashboard.refresh();
-    UI.toast('Retour enregistré — stock restauré' + (returnedDebt > 0 ? ' — Dette annulée : ' + Utils.currency(returnedDebt) : ''), 'success');
+    UI.toast(I18n.t('toast_return_ok') + (returnedDebt > 0 ? ' — ' + (I18n._lang==='en'?'Debt cancelled:':'Dette annulée:') + ' ' + Utils.currency(returnedDebt) : ''), 'success');
     this.render();
   },
 
@@ -6219,9 +6421,38 @@ const CloudConfig = {
     const oldCfg = { type:'supabase', url, key, db:'smp_data', savedAt: new Date().toISOString() };
     localStorage.setItem(ServerConfig.CFG_KEY, JSON.stringify(oldCfg));
     ServerConfig.updateDisplay();
-    UI.toast('Cloud Supabase activé ! Synchronisation en cours...', 'success');
+    UI.toast('Cloud Supabase activé !', 'success');
     this.close();
-    setTimeout(() => Cloud.pushAll(), 1500);
+    // Demander à l'utilisateur ce qu'il veut faire
+    setTimeout(() => CloudConfig._askSyncDirection(), 800);
+  },
+
+  async _askSyncDirection() {
+    const msg = 'Choisissez une option :\n\n' +
+      '• Telecharger : les donnees du cloud viennent sur cet appareil\n' +
+      '• Envoyer : vos donnees locales vont vers le cloud\n\n' +
+      'Si vous avez deja des donnees sur un autre appareil, choisissez Telecharger.';
+    const download = await SmpModal.confirm(msg, {
+        title: 'Direction de la sync',
+        okLabel: 'Telecharger du cloud',
+        okClass: 'btn-primary',
+        cancelLabel: 'Envoyer vers cloud'
+      }
+    );
+    if (download) {
+      UI.toast('Téléchargement depuis le cloud...', 'info');
+      const ok = await Cloud.pullAll();
+      if (ok) {
+        UI.renderAll(); Dashboard.refresh();
+        UI.toast('✅ Données synchronisées depuis le cloud', 'success');
+      } else {
+        UI.toast(I18n.t('toast_cloud_empty'),'warning');
+        Cloud.pushAll();
+      }
+    } else {
+      UI.toast('Envoi des données locales vers le cloud...', 'info');
+      Cloud.pushAll();
+    }
   },
 
   disable() {
@@ -6241,6 +6472,27 @@ const CloudConfig = {
     navigator.clipboard.writeText(sql.trim())
       .then(() => UI.toast('SQL copié dans le presse-papiers !', 'success'))
       .catch(() => UI.toast('Sélectionnez le texte et copiez manuellement', 'warning'));
+  },
+
+  testFromUI() { this.open(); },
+
+  async forcePull() {
+    if (!Cloud._client) return UI.toast(I18n.t('err_cloud_not_configured'),'warning');
+    const ok2 = await SmpModal.confirm('Telecharger les donnees du cloud ? Vos donnees locales seront remplacees.');
+    if (!ok2) return;
+    UI.toast('Téléchargement en cours...', 'info');
+    const ok = await Cloud.pullAll();
+    if (ok) { UI.renderAll(); Dashboard.refresh(); UI.toast(I18n.t('toast_cloud_pull'),'success'); }
+    else UI.toast('Erreur ou cloud vide', 'danger');
+  },
+
+  async forcePush() {
+    if (!Cloud._client) return UI.toast(I18n.t('err_cloud_not_configured'),'warning');
+    const ok2 = await SmpModal.confirm('Envoyer vos donnees locales vers le cloud ? Les donnees existantes sur le cloud seront remplacees.');
+    if (!ok2) return;
+    UI.toast('Envoi en cours...', 'info');
+    await Cloud.pushAll();
+    UI.toast(I18n.t('toast_cloud_push'),'success');
   },
 
   testFromUI() { this.open(); }
@@ -6951,7 +7203,18 @@ const AIConfig = {
       };
     }
 
-    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    // Timeout 15s pour eviter blocage indefini si API ne repond pas
+    const controller = new AbortController();
+    const timeoutId  = setTimeout(() => controller.abort(), 15000);
+    let res;
+    try {
+      res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+    } catch(fetchErr) {
+      clearTimeout(timeoutId);
+      if (fetchErr.name === 'AbortError') throw new Error(I18n.t('err_ai_timeout'));
+      throw fetchErr;
+    }
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       let errMsg = `Erreur HTTP ${res.status}`;
@@ -7656,17 +7919,17 @@ const Expenses = {
       createdAt: new Date().toISOString()
     });
     DB.save(); Cloud.pushAll(); this.render();
-    UI.toast('Dépense : ' + Utils.currency(amount), 'success');
+    UI.toast(I18n.t('toast_expense_added') + ' : ' + Utils.currency(amount), 'success');
     ['exp-desc','exp-amount','exp-notes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
   },
   async remove(id) {
-    if (!Auth.isAdmin()) return UI.toast('Admin requis','danger');
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('err_admin_required'),'danger');
     if (!await SmpModal.confirm('Supprimer cette dépense ? Cette action est irréversible.', {title:'Supprimer la dépense', icon:'💸', okLabel:'Supprimer', okClass:'btn-danger'})) return;
     DB.data.expenses = (DB.data.expenses||[]).filter(e => e.id !== id);
     DB.save(); Cloud.pushAll(); this.render();
-    UI.toast('Dépense supprimée','warning');
+    UI.toast(I18n.t('toast_expense_deleted'),'warning');
   },
   getMonthTotal() {
     const n = new Date();
