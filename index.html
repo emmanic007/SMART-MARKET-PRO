@@ -597,54 +597,85 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 
 <!-- AUTH -->
 <div id="auth-overlay">
-  <div class="auth-card" style="max-width:400px">
+  <div class="auth-card" style="max-width:420px;width:100%">
     <div class="auth-logo" id="auth-brand">Smart Market Pro</div>
-    <div class="auth-app-name" id="auth-shop-name" style="display:none"></div>
     <div class="auth-sub">v7.7 Enterprise</div>
 
-    <!-- ETAPE 1: Sélection du compte -->
-    <div id="auth-step-accounts">
-      <div style="font-family:var(--fm);font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center">Qui êtes-vous ?</div>
-      <div id="accounts-list"></div>
-      <div style="display:flex;gap:12px;justify-content:center">
-        <button onclick="Auth.showDemoMode()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Mode démo</button>
-        <span style="color:var(--text3);font-size:.7rem">·</span>
-        <button onclick="RecoveryManager.show()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Code oublié ?</button>
+    <!-- ÉCRAN 1 : Connexion email + mot de passe -->
+    <div id="auth-step-login">
+      <div style="font-family:var(--fm);font-size:.75rem;color:var(--text3);text-align:center;margin-bottom:20px">Connectez-vous à votre boutique</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">📧 Email</label>
+        <input type="email" id="auth-email" placeholder="votre@email.com" autocomplete="email" inputmode="email" style="text-align:left">
       </div>
-    </div>
-
-    <!-- ETAPE 2: Saisie du PIN -->
-    <div id="auth-step-pin" style="display:none">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <button onclick="Auth.backToAccounts()" style="background:none;border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);cursor:pointer;font-size:.9rem;padding:4px 10px">← Retour</button>
-        <div style="text-align:center;flex:1">
-          <div id="auth-selected-name" style="font-family:var(--fd);font-weight:800;font-size:.95rem"></div>
-          <div id="auth-selected-role" style="font-family:var(--fm);font-size:.62rem;color:var(--text3);margin-top:2px"></div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label">🔒 Mot de passe</label>
+        <div style="position:relative">
+          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" style="text-align:left;padding-right:44px" onkeydown="if(event.key==='Enter')CloudAuth.login()">
+          <button onclick="CloudAuth.togglePwd()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem">👁</button>
         </div>
-        <div style="width:60px"></div>
       </div>
-      <div class="pin-display">
-        <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
-        <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+      <div id="auth-error" class="auth-error" style="display:none"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="CloudAuth.login()" id="auth-login-btn">🔐 Se connecter</button>
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="CloudAuth.showRegister()" style="background:none;border:none;color:var(--accent);font-size:.78rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Pas de compte ? Créer un compte</button>
       </div>
-      <div id="pin-grid">
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('1')">1</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('2')">2</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('3')">3</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('4')">4</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('5')">5</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('6')">6</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('7')">7</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('8')">8</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('9')">9</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('⌫')">⌫</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('0')">0</button>
-        <button class="pin-btn" type="button" onclick="Auth.pinInput('✓')" style="color:var(--accent)">✓</button>
+      <div style="text-align:center;margin-top:8px">
+        <button onclick="CloudAuth.showForgot()" style="background:none;border:none;color:var(--text3);font-size:.72rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Mot de passe oublié ?</button>
       </div>
-      <div class="auth-error" id="auth-error"></div>
     </div>
 
-    <div class="sync-badge" style="margin-top:12px"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Hors ligne</span></div>
+    <!-- ÉCRAN 2 : Créer un compte propriétaire -->
+    <div id="auth-step-register" style="display:none">
+      <div style="font-family:var(--fd);font-size:.9rem;font-weight:700;text-align:center;margin-bottom:16px">🏪 Créer votre compte</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Votre nom complet</label>
+        <input type="text" id="reg-nom" placeholder="Ex: Jean Emmanuel" maxlength="40">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">📧 Email</label>
+        <input type="email" id="reg-email" placeholder="votre@email.com" inputmode="email">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">🔒 Mot de passe (min. 6 caractères)</label>
+        <input type="password" id="reg-password" placeholder="••••••••">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">🏪 Nom de votre boutique principale</label>
+        <input type="text" id="reg-shop" placeholder="Ex: Boutique Centrale" maxlength="40">
+      </div>
+      <div id="reg-error" class="auth-error" style="display:none"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="CloudAuth.register()" id="reg-btn">✅ Créer mon compte</button>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="CloudAuth.showLogin()" style="background:none;border:none;color:var(--text3);font-size:.75rem;cursor:pointer;font-family:var(--fm)">← Retour à la connexion</button>
+      </div>
+    </div>
+
+    <!-- ÉCRAN 3 : Mot de passe oublié -->
+    <div id="auth-step-forgot" style="display:none">
+      <div style="font-family:var(--fd);font-size:.9rem;font-weight:700;text-align:center;margin-bottom:8px">🔑 Réinitialiser le mot de passe</div>
+      <div style="font-size:.75rem;color:var(--text3);text-align:center;margin-bottom:16px;font-family:var(--fm)">Un lien de réinitialisation sera envoyé à votre email</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">📧 Email</label>
+        <input type="email" id="forgot-email" placeholder="votre@email.com" inputmode="email">
+      </div>
+      <div id="forgot-msg" style="font-size:.78rem;min-height:18px;margin-bottom:10px;text-align:center;font-family:var(--fm)"></div>
+      <button class="btn btn-primary btn-full" onclick="CloudAuth.sendReset()" id="forgot-btn">📧 Envoyer le lien</button>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="CloudAuth.showLogin()" style="background:none;border:none;color:var(--text3);font-size:.75rem;cursor:pointer;font-family:var(--fm)">← Retour</button>
+      </div>
+    </div>
+
+    <!-- ÉCRAN 4 : Sélection de boutique (admin multi-boutiques) -->
+    <div id="auth-step-shops" style="display:none">
+      <div style="font-family:var(--fd);font-size:.9rem;font-weight:700;text-align:center;margin-bottom:16px">🏪 Choisissez votre boutique</div>
+      <div id="auth-shops-list"></div>
+    </div>
+
+    <div class="sync-badge" style="margin-top:16px">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Hors ligne</span>
+    </div>
   </div>
 </div>
 
@@ -8670,133 +8701,96 @@ const Dashboard = {
 
 /* ═══════════════ INIT ═══════════════ */
 window.addEventListener('DOMContentLoaded', async () => {
-  // 1. Charge DB et paramètres
+  // 1. DB + Paramètres
   Settings.load();
   DB.load();
 
-  // 2. Crée l'admin par défaut si nécessaire (PIN: 0000)
-  await Auth.ensureDefaultAdmin();
-
-  // 3. Pavé numérique : boutons définis en HTML — aucune action JS nécessaire
-
-  // 4. Applique les paramètres visuels
+  // 2. Paramètres visuels
   Settings.apply();
   Settings._updateBranding();
 
-  // 4b. Render account list APRÈS ensureDefaultAdmin (ordre critique)
-  Auth.renderAccountsList();
-
-  // 4c. Onboarding premier lancement
-  if (Onboarding.shouldShow()) {
-    setTimeout(() => Onboarding.show(), 600);
-  }
-
-  // PWA
-  if (typeof PWA !== 'undefined') PWA.init();
-
-  // Bouton retour Android — intercepter popstate
-  history.replaceState({ tab: 'dashboard' }, '', '#dashboard');
-
-  // ── Bouton retour Android — comportement en deux temps ──
-  let _backPressedOnce = false;
-  let _backPressTimer  = null;
-
-  window.addEventListener('popstate', e => {
-    if (!Auth.currentUser) return; // Non connecté → nav navigateur normal
-
-    const tabId = e.state?.tab || 'dashboard';
-
-    // CAS 1 : on est sur le Dashboard et on appuie retour
-    // → Comportement en deux temps : toast "appuyez encore" puis quitter
-    if (UI._currentTab === 'dashboard') {
-      // Remettre l'état pour ne pas quitter immédiatement
-      history.pushState({ tab: 'dashboard' }, '', '#dashboard');
-
-      if (_backPressedOnce) {
-        // Deuxième appui dans les 2 secondes → quitter l'application
-        clearTimeout(_backPressTimer);
-        window.close(); // Fonctionne sur WebView (APK Median)
-        // Fallback navigateur : retour dans l'historique du navigateur
-        history.go(-1);
-        return;
-      }
-
-      // Premier appui → afficher le toast et attendre
-      _backPressedOnce = true;
-      UI.toast(I18n.t('toast_quit_confirm'),'warning');
-      _backPressTimer = setTimeout(() => {
-        _backPressedOnce = false;
-      }, 2000);
-      return;
-    }
-
-    // CAS 2 : on est sur n'importe quel autre onglet
-    // → Revenir au Dashboard
-    _backPressedOnce = false;
-    clearTimeout(_backPressTimer);
-    UI.switchTab('dashboard', true);
-  });
-
-  // EOD Summary — planifier pour aujourd'hui
-  if (typeof EODSummary !== 'undefined') EODSummary.schedule();
-  console.log('[SMP v7.7] Initialisation complète');
-
-  // Bouton EOD manuel dans settings (si présent)
-  const eodManualBtn = document.getElementById('pwa-install-btn');
-  if (eodManualBtn && typeof PWA !== 'undefined') PWA._updateInstallBtn();
-
-  // Code maître (généré une seule fois et stocké localement)
-  RecoveryManager.generateMasterCode();
-
-  // Server config + Storage prefs + AI config
-  ServerConfig.initOnLoad();
-  // Charger la config cloud AVANT initAndSync pour que les clés soient disponibles
-  const _cloudCfg = CloudConfig.load();
-  if (_cloudCfg && _cloudCfg.url && _cloudCfg.key) {
-    Cloud.SUPABASE_URL = _cloudCfg.url;
-    Cloud.SUPABASE_KEY = _cloudCfg.key;
-  }
-  StorageConfig.initPreview();
-  AIConfig.updateStatus();
-
-  // 5. Cloud Supabase — init + pull + realtime en une seule séquence attendue
-  await Cloud.initAndSync();
-
-  // 7. Auto-backup
-  AutoBackup.start();
-
-  // 8. Raccourcis clavier pour le PIN (clavier physique)
-  document.addEventListener('keydown', e => {
-    const ov = document.getElementById('auth-overlay');
-    if (!ov || ov.style.display === 'none') return;
-    if (e.key >= '0' && e.key <= '9') Auth.pinInput(e.key);
-    else if (e.key === 'Backspace')    Auth.pinInput('⌫');
-    else if (e.key === 'Enter')        Auth.pinInput('✓');
-  });
-
-  // I18n init
+  // 3. I18n
   I18n._lang = Settings.data.lang || 'fr';
   I18n.apply();
 
-  // Init new modules data if missing
+  // 4. Données manquantes
   if (!DB.data.categories)      DB.data.categories      = [...Categories.defaults];
-  Categories.normalize(); // Migration : convertit les objets {name} en strings pures
   if (!DB.data.expenses)        DB.data.expenses        = [];
   if (!DB.data.commissionsPaid) DB.data.commissionsPaid = {};
-  if (!DB.data.suppliers)   DB.data.suppliers   = [];
-  if (!DB.data.shops)       DB.data.shops       = [];
-  if (!DB.data.returns)     DB.data.returns     = [];
-  if (!DB.data.loyalty)     DB.data.loyalty     = {};
+  if (!DB.data.suppliers)       DB.data.suppliers       = [];
+  if (!DB.data.returns)         DB.data.returns         = [];
+  if (!DB.data.loyalty)         DB.data.loyalty         = {};
+  Categories.normalize();
 
-  // Refresh dashboard on load
-  // (will show data once user logs in)
+  // 5. Modules divers
+  if (typeof PWA !== 'undefined') PWA.init();
+  if (typeof AutoBackup !== 'undefined') AutoBackup.start();
+  if (typeof EODSummary !== 'undefined') EODSummary.schedule();
+  if (typeof ServerConfig !== 'undefined') ServerConfig.initOnLoad();
+  if (typeof StorageConfig !== 'undefined') StorageConfig.initPreview();
+  if (typeof AIConfig !== 'undefined') AIConfig.updateStatus();
+  if (typeof RecoveryManager !== 'undefined') RecoveryManager.generateMasterCode();
 
-  // Auto-logout inactivity timer
-  ['click','touchstart','keydown','scroll'].forEach(ev => {
-    document.addEventListener(ev, () => { if(Auth.currentUser) Auth.resetInactivityTimer(); }, {passive:true});
+  // 6. Bouton retour Android
+  history.replaceState({ tab:'dashboard' }, '', '#dashboard');
+  let _backPressedOnce = false, _backPressTimer = null;
+  window.addEventListener('popstate', () => {
+    if (!Auth.currentUser) return;
+    if (UI._currentTab === 'dashboard') {
+      history.pushState({ tab:'dashboard' }, '', '#dashboard');
+      if (_backPressedOnce) { clearTimeout(_backPressTimer); history.go(-1); return; }
+      _backPressedOnce = true;
+      UI.toast(I18n.t('toast_quit_confirm'),'warning');
+      _backPressTimer = setTimeout(() => { _backPressedOnce = false; }, 2000);
+      return;
+    }
+    _backPressedOnce = false; clearTimeout(_backPressTimer);
+    UI.switchTab('dashboard', true);
   });
 
-  console.log('[SMP v7.7] ✅ Prêt | PIN admin par défaut : 0000 | Pavé numérique: ' + (document.getElementById('pin-grid')?.children.length || 0) + ' boutons');
+  // 7. Timer inactivité
+  ['click','touchstart','keydown','scroll'].forEach(ev => {
+    document.addEventListener(ev, () => {
+      if (Auth.currentUser && typeof Auth.resetInactivityTimer === 'function')
+        Auth.resetInactivityTimer();
+    }, {passive:true});
+  });
+
+  // 8. CloudAuth — initialisation principale
+  // Vérifie si la clé anon Supabase est déjà configurée
+  if (!localStorage.getItem('SMP_ANON_KEY')) {
+    // Premier lancement — demander la clé
+    // Attendre que Supabase SDK soit chargé
+    let waited = 0;
+    const waitSDK = setInterval(() => {
+      waited += 300;
+      if (typeof window.supabase !== 'undefined') {
+        clearInterval(waitSDK);
+        CloudAuth._showKeyConfig();
+      } else if (waited >= 10000) {
+        clearInterval(waitSDK);
+        // Pas de Supabase — afficher login quand même
+        CloudAuth._showAuthOverlay();
+      }
+    }, 300);
+  } else {
+    // Clé déjà configurée — initialiser CloudAuth
+    if (typeof window.supabase !== 'undefined') {
+      CloudAuth.init();
+    } else {
+      let waited = 0;
+      const waitSDK = setInterval(() => {
+        waited += 300;
+        if (typeof window.supabase !== 'undefined') {
+          clearInterval(waitSDK); CloudAuth.init();
+        } else if (waited >= 10000) {
+          clearInterval(waitSDK); CloudAuth._showAuthOverlay();
+        }
+      }, 300);
+    }
+  }
+
+  console.log('[SMP v7.7] ✅ Smart Market Pro démarré');
 });
 
 const Settings = {
@@ -8930,170 +8924,436 @@ const AutoBackup = {
   }
 };
 
-/* ═══════════════ CLOUD — Supabase ═══════════════ */
-const Cloud = {
-  SUPABASE_URL: '',
-  SUPABASE_KEY: '',
+/* ═══════════════ CLOUD AUTH ═══════════════ */
+const CloudAuth = {
   _client: null,
-  isOnline: false,
+  _session: null,
+  _owner: null,
+  _shop: null,
+
   init() {
+    const url = 'https://mgifpcfpcrbittidacwe.supabase.co';
+    const key = localStorage.getItem('SMP_ANON_KEY') || '';
+    if (!key || typeof window.supabase === 'undefined') { this._showAuthOverlay(); return; }
     try {
-      if (typeof window.supabase === 'undefined') {
-        console.warn('[Cloud] Supabase SDK non chargé (mode hors-ligne)');
-        this.isOnline = false; this._updateUI(); return;
-      }
-      // Vérification stricte : URL valide + clé non vide + non placeholder
-      const url = this.SUPABASE_URL || '';
-      const key = this.SUPABASE_KEY || '';
-      if (!url || !key
-          || url === '' || key === ''
-          || key === 'VOTRE_NOUVELLE_CLE_ICI'
-          || !url.includes('supabase.co')
-          || key.length < 20) {
-        console.log('[Cloud] Non configuré — mode local');
-        this.isOnline = false; this._updateUI(); return;
-      }
-      this._client = window.supabase.createClient(url, key);
-      this._checkConnection();
+      this._client = window.supabase.createClient(url, key, {
+        auth: { persistSession: true, autoRefreshToken: true }
+      });
+      this._client.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          this._session = session;
+          await this._loadUserContext(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          this._session = null; this._owner = null; this._shop = null;
+          this._showAuthOverlay();
+        }
+      });
+      this._client.auth.getSession().then(({data}) => {
+        if (data?.session) { this._session = data.session; this._loadUserContext(data.session.user); }
+        else { this._showAuthOverlay(); }
+      });
+    } catch(e) { console.error('[CloudAuth]',e); this._showAuthOverlay(); }
+  },
+
+  async login() {
+    const email    = document.getElementById('auth-email')?.value.trim();
+    const password = document.getElementById('auth-password')?.value;
+    const errEl    = document.getElementById('auth-error');
+    const btn      = document.getElementById('auth-login-btn');
+    if (!email || !password) { this._setError(errEl,'Email et mot de passe requis'); return; }
+    if (!this._client) { this._setError(errEl,'Supabase non configuré'); return; }
+    btn.textContent = '⏳ Connexion...'; btn.disabled = true;
+    this._setError(errEl,'');
+    try {
+      const {data,error} = await this._client.auth.signInWithPassword({email,password});
+      if (error) throw error;
+      this._session = data.session;
+      await this._loadUserContext(data.user);
     } catch(e) {
-      console.error('[Cloud] init() erreur :', e);
-      this.isOnline = false; this._updateUI();
+      btn.textContent = '🔐 Se connecter'; btn.disabled = false;
+      this._setError(errEl, this._friendlyError(e.message));
     }
   },
-  async _checkConnection() {
-    try { const{data,error}=await this._client.from('smp_data').select('shop_id').limit(1); this.isOnline=!error; }
-    catch(_) { this.isOnline=false; }
-    this._updateUI();
-    return this.isOnline;
-  },
-  _updateUI() {
-    const on=this.isOnline;
-    ['sync-dot','mob-cloud','cloud-dot'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.classList.toggle('online',on); el.classList.toggle('online',on); } });
-    const sl=document.getElementById('sync-label'); if(sl) sl.textContent=on?'En ligne':'Hors ligne';
-  },
-  _showSync() { const el=document.getElementById('sync-indicator'); if(el){el.style.display='flex';setTimeout(()=>el.style.display='none',2500);} },
-  async pushAll() {
-    if (!this._client||!this.isOnline) return;
-    this._showSync();
+
+  async register() {
+    const nom      = document.getElementById('reg-nom')?.value.trim();
+    const email    = document.getElementById('reg-email')?.value.trim();
+    const password = document.getElementById('reg-password')?.value;
+    const shopNom  = document.getElementById('reg-shop')?.value.trim();
+    const errEl    = document.getElementById('reg-error');
+    const btn      = document.getElementById('reg-btn');
+    if (!nom||!email||!password||!shopNom) { this._setError(errEl,'Tous les champs sont requis'); return; }
+    if (password.length < 6) { this._setError(errEl,'Mot de passe : 6 caractères minimum'); return; }
+    btn.textContent = '⏳ Création...'; btn.disabled = true;
+    this._setError(errEl,'');
     try {
-      await this._client.from('smp_data').upsert({
-        shop_id:          Settings.data.shopName || 'default',
-        items:            JSON.stringify(DB.data.items),
-        sales:            JSON.stringify(DB.data.sales),
-        users:            JSON.stringify(DB.data.users),
-        expenses:         JSON.stringify(DB.data.expenses         || []),
-        returns:          JSON.stringify(DB.data.returns          || []),
-        loyalty:          JSON.stringify(DB.data.loyalty          || {}),
-        commissions_paid: JSON.stringify(DB.data.commissionsPaid  || {}),
-        suppliers:        JSON.stringify(DB.data.suppliers        || []),
-        cash_init:        DB.data.cashInit,
-        updated_at:       new Date().toISOString()
-      }, {onConflict:'shop_id'});
-    } catch(e) { console.error('[Cloud]',e); }
+      // Créer le compte Auth avec les métadonnées
+      // Le trigger handle_new_user() côté Supabase créera automatiquement
+      // le owner dans smp_owners et la boutique dans smp_shops
+      const {data, error} = await this._client.auth.signUp({
+        email, password,
+        options: {
+          data: { nom, shop_name: shopNom }
+        }
+      });
+      if (error) throw error;
+
+      // Attendre que le trigger ait eu le temps de s'exécuter (1 seconde)
+      await new Promise(r => setTimeout(r, 1500));
+
+      // Se connecter
+      const {data: loginData, error: loginErr} = await this._client.auth.signInWithPassword({email, password});
+      if (loginErr) throw loginErr;
+
+      this._session = loginData.session;
+      await this._loadUserContext(loginData.user);
+    } catch(e) {
+      btn.textContent = '✅ Créer mon compte'; btn.disabled = false;
+      this._setError(errEl, this._friendlyError(e.message));
+    }
   },
-  async pullAll() {
-    if (!this._client||!this.isOnline) return false;
+
+  async sendReset() {
+    const email = document.getElementById('forgot-email')?.value.trim();
+    const msgEl = document.getElementById('forgot-msg');
+    const btn   = document.getElementById('forgot-btn');
+    if (!email) { msgEl.style.color='var(--danger)'; msgEl.textContent='Email requis'; return; }
+    btn.disabled = true; btn.textContent = '⏳ Envoi...';
     try {
-      const{data,error}=await this._client.from('smp_data').select('*').eq('shop_id',Settings.data.shopName||'default').single();
-      if(error||!data) return false;
+      await this._client.auth.resetPasswordForEmail(email,{
+        redirectTo:'https://emmanic007.github.io/smart-market-pro/'
+      });
+      msgEl.style.color='var(--accent)'; msgEl.textContent='✅ Email envoyé ! Vérifiez votre boîte mail.';
+    } catch(e) { msgEl.style.color='var(--danger)'; msgEl.textContent=this._friendlyError(e.message); }
+    btn.disabled=false; btn.textContent='📧 Envoyer le lien';
+  },
+
+  async _loadUserContext(user) {
+    try {
+      const {data:ownerData} = await this._client
+        .from('smp_owners').select('*').eq('auth_id',user.id).single();
+      if (ownerData) {
+        this._owner = ownerData;
+        const {data:shops} = await this._client
+          .from('smp_shops').select('*').eq('owner_id',ownerData.id);
+        if (shops?.length === 1) {
+          this._shop = shops[0];
+          // Créer les données initiales si elles n'existent pas
+          await this._ensureShopData(shops[0].id, ownerData.id);
+          await this._enterApp('admin', ownerData.nom);
+        } else if (shops?.length > 1) {
+          this._showShopSelector(shops);
+        } else {
+          // Boutique pas encore créée par le trigger — attendre et réessayer
+          await new Promise(r => setTimeout(r, 2000));
+          const {data:shops2} = await this._client
+            .from('smp_shops').select('*').eq('owner_id',ownerData.id);
+          if (shops2?.length > 0) {
+            this._shop = shops2[0];
+            await this._ensureShopData(shops2[0].id, ownerData.id);
+            await this._enterApp('admin', ownerData.nom);
+          } else {
+            this._setError(
+              document.getElementById('auth-error'),
+              'Boutique non créée. Vérifiez votre connexion et réessayez.'
+            );
+            this._showAuthOverlay();
+          }
+        }
+        return;
+      }
+      // Chercher si c'est un vendeur
+      const {data:userData} = await this._client
+        .from('smp_users').select('*,smp_shops(*)').eq('auth_id',user.id).single();
+      if (userData) {
+        this._shop = userData.smp_shops;
+        await this._enterApp(userData.role, userData.nom);
+        return;
+      }
+      // Utilisateur Auth sans contexte — owner pas encore créé par trigger
+      await new Promise(r => setTimeout(r, 2000));
+      const {data:ownerData2} = await this._client
+        .from('smp_owners').select('*').eq('auth_id',user.id).single();
+      if (ownerData2) {
+        this._owner = ownerData2;
+        const {data:shops3} = await this._client
+          .from('smp_shops').select('*').eq('owner_id',ownerData2.id);
+        if (shops3?.length > 0) {
+          this._shop = shops3[0];
+          await this._ensureShopData(shops3[0].id, ownerData2.id);
+          await this._enterApp('admin', ownerData2.nom);
+          return;
+        }
+      }
+      UI.toast('Compte non associé à une boutique. Reconnectez-vous.', 'danger');
+      await this._client.auth.signOut();
+    } catch(e) {
+      console.error('[CloudAuth]', e);
+      this._showAuthOverlay();
+    }
+  },
+
+  // Créer les données initiales de la boutique si elles n'existent pas
+  async _ensureShopData(shopId, ownerId) {
+    try {
+      const {data} = await this._client
+        .from('smp_data').select('shop_id').eq('shop_id', shopId).single();
+      if (!data) {
+        await this._client.from('smp_data').insert({
+          shop_id: shopId, owner_id: ownerId,
+          items:'[]', sales:'[]', expenses:'[]', returns:'[]',
+          loyalty:'{}', commissions_paid:'{}', suppliers:'[]',
+          categories:'[]', cash_init: 0
+        });
+      }
+    } catch(e) {
+      // Si erreur de lecture (pas de données) → créer
+      await this._client.from('smp_data').insert({
+        shop_id: shopId, owner_id: ownerId,
+        items:'[]', sales:'[]', expenses:'[]', returns:'[]',
+        loyalty:'{}', commissions_paid:'{}', suppliers:'[]',
+        categories:'[]', cash_init: 0
+      }).catch(() => {});
+    }
+  },
+
+  async _enterApp(role, nom) {
+    Auth.currentUser = {
+      id: this._session?.user?.id,
+      name: nom, role,
+      email: this._session?.user?.email,
+      shopId: this._shop?.id,
+      shopName: this._shop?.nom,
+    };
+    Settings.data.shopName = this._shop?.nom || nom;
+    Settings.data.currency = this._shop?.devise || 'F';
+    Settings.save();
+    await Cloud.pullShop(this._shop.id, this._owner?.id || null);
+    const overlay = document.getElementById('auth-overlay');
+    if (overlay) overlay.style.display = 'none';
+    UI.renderAll(); Dashboard.refresh();
+    Cloud.subscribeShop(this._shop.id);
+    UI.toast(`${I18n.t('toast_welcome_back')}, ${nom} 👋`,'success');
+  },
+
+  _showShopSelector(shops) {
+    ['auth-step-login','auth-step-register','auth-step-forgot'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.display='none';
+    });
+    const step=document.getElementById('auth-step-shops');
+    const list=document.getElementById('auth-shops-list');
+    if (!step||!list) return;
+    step.style.display='';
+    list.innerHTML = shops.map(s=>`
+      <button class="btn btn-ghost btn-full" style="margin-bottom:8px;text-align:left;padding:14px 16px"
+        onclick="CloudAuth._selectShop('${s.id}','${s.nom}')">
+        🏪 <strong>${Utils.esc(s.nom)}</strong>
+        <span style="font-size:.7rem;color:var(--text3);display:block;margin-top:2px">${s.devise||'F'}</span>
+      </button>`).join('');
+  },
+
+  async _selectShop(shopId) {
+    const {data:shop} = await this._client.from('smp_shops').select('*').eq('id',shopId).single();
+    this._shop = shop;
+    await this._enterApp('admin', this._owner.nom);
+  },
+
+  async createSeller(nom, email, password, shopId) {
+    if (!this._client||!this._owner) return {ok:false,msg:'Non autorisé'};
+    try {
+      const {data,error} = await this._client.auth.signUp({email,password});
+      if (error) throw error;
+      await this._client.from('smp_users').insert({
+        auth_id:data.user.id, owner_id:this._owner.id,
+        shop_id:shopId, nom, email, role:'seller'
+      });
+      return {ok:true};
+    } catch(e) { return {ok:false,msg:this._friendlyError(e.message)}; }
+  },
+
+  // ── Config initiale clé Supabase ──
+  _showKeyConfig() {
+    let modal = document.getElementById('smp-key-config');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'smp-key-config';
+      modal.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      modal.innerHTML = `
+        <div style="background:var(--surface);border:1px solid var(--bord2);border-radius:var(--rxl);padding:28px 24px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)">
+          <div style="font-family:var(--fd);font-size:1.1rem;font-weight:800;color:var(--accent);margin-bottom:8px;text-align:center">⚙️ Configuration initiale</div>
+          <div style="font-family:var(--fm);font-size:.78rem;color:var(--text2);margin-bottom:18px;text-align:center;line-height:1.7">
+            Entrez votre <strong>clé Supabase anon public</strong>.<br><br>
+            <strong>Où la trouver ?</strong><br>
+            supabase.com → projet → Settings → API → <em>anon public</em>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">Clé anon public</label>
+            <input type="text" id="smp-anon-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="font-size:.7rem">
+          </div>
+          <div id="smp-key-error" style="color:var(--danger);font-size:.75rem;min-height:18px;margin-bottom:10px;text-align:center;font-family:var(--fm)"></div>
+          <button class="btn btn-primary btn-full" onclick="CloudAuth._saveAnonKey()" id="smp-key-btn">✅ Enregistrer et continuer</button>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+  },
+
+  async _saveAnonKey() {
+    const key   = document.getElementById('smp-anon-key-input')?.value.trim();
+    const errEl = document.getElementById('smp-key-error');
+    const btn   = document.getElementById('smp-key-btn');
+    if (!key||key.length<100) { errEl.textContent='Clé invalide — doit commencer par eyJ...'; return; }
+    btn.textContent='⏳ Vérification...'; btn.disabled=true;
+    try {
+      const tc = window.supabase.createClient('https://mgifpcfpcrbittidacwe.supabase.co',key);
+      const {error} = await tc.from('smp_owners').select('id').limit(1);
+      if (error&&!['PGRST116','42501','42P01'].includes(error.code)) throw new Error(error.message);
+      localStorage.setItem('SMP_ANON_KEY',key);
+      const modal = document.getElementById('smp-key-config');
+      if (modal) modal.style.display='none';
+      this.init();
+    } catch(e) {
+      errEl.textContent='Erreur : '+e.message;
+      btn.textContent='✅ Enregistrer et continuer'; btn.disabled=false;
+    }
+  },
+
+  async logout() {
+    if (this._client) await this._client.auth.signOut();
+    Auth.currentUser = null;
+    this._showAuthOverlay();
+    UI.toast(I18n._lang==='en'?'Logged out':'Déconnecté','warning');
+  },
+
+  _showAuthOverlay() {
+    const overlay = document.getElementById('auth-overlay');
+    if (overlay) overlay.style.display = 'flex';
+    this.showLogin();
+  },
+
+  showLogin() {
+    const steps = ['auth-step-login','auth-step-register','auth-step-forgot','auth-step-shops'];
+    steps.forEach((id,i) => {
+      const el = document.getElementById(id); if(el) el.style.display = i===0 ? '' : 'none';
+    });
+    const errEl = document.getElementById('auth-error');
+    if (errEl) errEl.style.display = 'none';
+  },
+  showRegister() {
+    ['auth-step-login','auth-step-forgot','auth-step-shops'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.display='none';
+    });
+    const el=document.getElementById('auth-step-register'); if(el) el.style.display='';
+  },
+  showForgot() {
+    ['auth-step-login','auth-step-register','auth-step-shops'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.display='none';
+    });
+    const el=document.getElementById('auth-step-forgot'); if(el) el.style.display='';
+  },
+
+  togglePwd() {
+    const inp = document.getElementById('auth-password');
+    if (inp) inp.type = inp.type==='password' ? 'text' : 'password';
+  },
+
+  _setError(el, msg) { if(el){ el.textContent=msg; el.style.display=msg?'':'none'; } },
+  _friendlyError(msg) {
+    if (!msg) return 'Erreur inconnue';
+    if (msg.includes('Invalid login')) return 'Email ou mot de passe incorrect';
+    if (msg.includes('Email not confirmed')) return 'Email non confirmé';
+    if (msg.includes('already registered')||msg.includes('already been registered')) return 'Cet email est déjà utilisé';
+    if (msg.includes('network')||msg.includes('fetch')) return 'Pas de connexion internet';
+    if (msg.includes('rate limit')) return 'Trop de tentatives — attendez 1 minute';
+    return msg;
+  },
+  getClient()  { return this._client; },
+  getShopId()  { return this._shop?.id; },
+  getOwnerId() { return this._owner?.id; },
+};
+
+/* ═══════════════ CLOUD — Sync données ═══════════════ */
+const Cloud = {
+  isOnline: false,
+  get _client() { return CloudAuth.getClient(); },
+
+  async pullShop(shopId, ownerId) {
+    if (!this._client||!shopId) return false;
+    try {
+      const {data,error} = await this._client
+        .from('smp_data').select('*').eq('shop_id',shopId).single();
+      if (error||!data) { this.isOnline=false; this._updateUI(); return false; }
       DB.data.items           = JSON.parse(data.items            || '[]');
       DB.data.sales           = JSON.parse(data.sales            || '[]');
-      DB.data.users           = JSON.parse(data.users            || '[]');
       DB.data.expenses        = JSON.parse(data.expenses         || '[]');
       DB.data.returns         = JSON.parse(data.returns          || '[]');
       DB.data.loyalty         = JSON.parse(data.loyalty          || '{}');
       DB.data.commissionsPaid = JSON.parse(data.commissions_paid || '{}');
       DB.data.suppliers       = JSON.parse(data.suppliers        || '[]');
+      DB.data.categories      = JSON.parse(data.categories       || '[]');
       DB.data.cashInit        = data.cash_init || 0;
-      // Sécurité : si le cloud a écrasé les users et qu'il n'y en a plus
-      if (!DB.data.users || DB.data.users.length === 0) {
-        await Auth.ensureDefaultAdmin();
-      }
-      DB.save(); return true;
-    } catch(e) { console.error('[Cloud]',e); return false; }
+      DB.data.shopId          = shopId;
+      DB.data.ownerId         = ownerId;
+      this.isOnline=true; this._updateUI(); DB.save(); return true;
+    } catch(e) { this.isOnline=false; this._updateUI(); return false; }
   },
-  async testConnection(url, key) {
+
+  async pushAll() {
+    if (!this._client||!DB.data.shopId) return;
     try {
-      if (typeof window.supabase === 'undefined') return {ok:false, msg:'SDK Supabase non chargé'};
-      const testClient = window.supabase.createClient(url, key);
-      const {error} = await testClient.from('smp_data').select('shop_id').limit(1);
-      if (error) return {ok:false, msg:'Erreur : ' + error.message};
-      return {ok:true, msg:'Connexion Supabase OK !'};
-    } catch(e) {
-      return {ok:false, msg:'Erreur réseau : ' + e.message};
-    }
+      await this._client.from('smp_data').upsert({
+        shop_id:          DB.data.shopId,
+        owner_id:         DB.data.ownerId,
+        items:            JSON.stringify(DB.data.items            || []),
+        sales:            JSON.stringify(DB.data.sales            || []),
+        expenses:         JSON.stringify(DB.data.expenses         || []),
+        returns:          JSON.stringify(DB.data.returns          || []),
+        loyalty:          JSON.stringify(DB.data.loyalty          || {}),
+        commissions_paid: JSON.stringify(DB.data.commissionsPaid  || {}),
+        suppliers:        JSON.stringify(DB.data.suppliers        || []),
+        categories:       JSON.stringify(DB.data.categories       || []),
+        cash_init:        DB.data.cashInit || 0,
+        updated_at:       new Date().toISOString()
+      },{onConflict:'shop_id'});
+    } catch(e) { console.error('[Cloud] pushAll:',e); }
   },
-  async initAndSync() {
-    try {
-      // Attendre que le SDK Supabase soit chargé (chargement async, max 8s)
-      if (typeof window.supabase === 'undefined') {
-        await new Promise(resolve => {
-          let waited = 0;
-          const check = setInterval(() => {
-            waited += 200;
-            if (typeof window.supabase !== 'undefined' || waited >= 8000) {
-              clearInterval(check); resolve();
-            }
-          }, 200);
-        });
-      }
-      if (typeof window.supabase === 'undefined') return;
-      const url = this.SUPABASE_URL || '';
-      const key = this.SUPABASE_KEY || '';
-      if (!url || !key || !url.includes('supabase.co') || key.length < 20) return;
-      this._client = window.supabase.createClient(url, key);
-      const online = await this._checkConnection();
-      if (online) {
-        const pulled = await this.pullAll();
-        if (pulled) { DB.save(); UI.renderAll(); Dashboard.refresh(); console.log('[Cloud] Données fraîches chargées au démarrage'); }
-        this.subscribeRealtime();
-      }
-      // Reconnexion automatique toutes les 30s si hors ligne
-      if (this._reconnectInterval) clearInterval(this._reconnectInterval);
-      this._reconnectInterval = setInterval(async () => {
-        if (!this.isOnline && this._client) {
-          const ok = await this._checkConnection();
-          if (ok) {
-            console.log('[Cloud] Reconnexion détectée — resync...');
-            await this.pullAll();
+
+  subscribeShop(shopId) {
+    if (!this._client||!shopId) return;
+    this._client.channel('smp-shop-'+shopId)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'smp_data',filter:`shop_id=eq.${shopId}`},
+        async payload => {
+          if (!payload.new) return;
+          try {
+            DB.data.items           = JSON.parse(payload.new.items            || '[]');
+            DB.data.sales           = JSON.parse(payload.new.sales            || '[]');
+            DB.data.expenses        = JSON.parse(payload.new.expenses         || '[]');
+            DB.data.returns         = JSON.parse(payload.new.returns          || '[]');
+            DB.data.loyalty         = JSON.parse(payload.new.loyalty          || '{}');
+            DB.data.commissionsPaid = JSON.parse(payload.new.commissions_paid || '{}');
+            DB.data.suppliers       = JSON.parse(payload.new.suppliers        || '[]');
             DB.save(); UI.renderAll(); Dashboard.refresh();
-            this.subscribeRealtime();
-          }
+            UI.toast(I18n.t('toast_cloud_synced'),'info');
+          } catch(e) { console.error('[Cloud RT]',e); }
         }
-      }, 30000);
-    } catch(e) { console.error('[Cloud] initAndSync erreur :', e); }
+      ).subscribe();
   },
-  subscribeRealtime() {
-    if (!this._client||!this.isOnline) return;
-    this._client.channel('smp-rt').on('postgres_changes',
-      {event:'*', schema:'public', table:'smp_data', filter:`shop_id=eq.${Settings.data.shopName||'default'}`},
-      payload => {
-        if (!payload.new) return;
-        try {
-          DB.data.items           = JSON.parse(payload.new.items            || '[]');
-          DB.data.sales           = JSON.parse(payload.new.sales            || '[]');
-          DB.data.users           = JSON.parse(payload.new.users            || '[]');
-          DB.data.expenses        = JSON.parse(payload.new.expenses         || '[]');
-          DB.data.returns         = JSON.parse(payload.new.returns          || '[]');
-          DB.data.loyalty         = JSON.parse(payload.new.loyalty          || '{}');
-          DB.data.commissionsPaid = JSON.parse(payload.new.commissions_paid || '{}');
-          DB.data.suppliers       = JSON.parse(payload.new.suppliers        || '[]');
-          DB.data.cashInit        = payload.new.cash_init || 0;
-          DB.save();
-          UI.renderAll();
-          Dashboard.refresh();
-          UI.toast(I18n.t('toast_cloud_synced'),'info');
-        } catch(e) { console.error('[Cloud RT]', e); }
-      }
-    ).subscribe();
-  }
+
+  _updateUI() {
+    const on = this.isOnline;
+    ['sync-dot','mob-cloud','cloud-dot'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.classList.toggle('online',on);
+    });
+    const sl=document.getElementById('sync-label'); if(sl) sl.textContent=on?'En ligne':'Hors ligne';
+  },
 };
+
 
 /* ═══════════════ DB ═══════════════ */
 const DB = {
   KEY: 'SMP_DB_V77',
   data: null,
-  defaultSchema() { return {version:'7.7',items:[],sales:[],users:[],cashInit:0,lastSync:null,expenses:[],returns:[],loyalty:{},commissionsPaid:{},suppliers:[],categories:[]}; },
+  defaultSchema() { return {version:'7.7',items:[],sales:[],users:[],cashInit:0,lastSync:null,expenses:[],returns:[],loyalty:{},commissionsPaid:{},suppliers:[],categories:[],shopId:null,ownerId:null}; },
   load() {
     try {
       // Migration transparente : cherche d'abord la clé courante, puis toutes les anciennes
@@ -9124,7 +9384,16 @@ const DB = {
       localStorage.setItem(this.KEY, JSON.stringify(this.data));
     } catch(e) { console.error('[DB]',e); this.data=this.defaultSchema(); }
   },
-  save() { try { this.data.lastSync=new Date().toISOString(); localStorage.setItem(this.KEY,JSON.stringify(this.data)); } catch(e) { try { UI.toast(I18n.t('toast_err_storage_low'),'danger'); } catch(_) { console.error('[DB] Erreur sauvegarde',e); } } },
+  save() {
+    try {
+      this.data.lastSync = new Date().toISOString();
+      localStorage.setItem(this.KEY, JSON.stringify(this.data));
+      // Push vers Supabase en arrière-plan si connecté
+      if (typeof Cloud !== 'undefined' && this.data.shopId) {
+        Cloud.pushAll().catch(e => console.warn('[DB] push cloud:', e));
+      }
+    } catch(e) { try { UI.toast(I18n.t('toast_err_storage_low'),'danger'); } catch(_) { console.error('[DB] save:',e); } }
+  },
   activeSales() { return this.data.sales.filter(s=>!s.deleted && !s.returned); },
   salesInPeriod(p) { const start=Utils.periodStart(p); return this.activeSales().filter(s=>new Date(s.date).getTime()>=start); }
 };
@@ -9429,39 +9698,35 @@ const Auth = {
     this.currentUser = null; this._buf = ''; this._pendingUser = null;
     clearTimeout(this._inactivityTimer);
 
-    // Fermer tous les overlays liés aux rôles (vendeur, mode vendeur, dash vendeur)
-    const overlaysToHide = [
-      'seller-dash-overlay', 'seller-mode-overlay', 'seller-prefs-overlay',
-      'deferred-overlay', 'eod-overlay', 'smp-confirm-overlay',
-      'smp-partial-overlay', 'cloud-config-overlay', 'restock-overlay'
-    ];
-    overlaysToHide.forEach(id => {
+    // Fermer tous les overlays
+    ['seller-dash-overlay','seller-mode-overlay','seller-prefs-overlay',
+     'deferred-overlay','eod-overlay','smp-confirm-overlay',
+     'smp-partial-overlay','cloud-config-overlay','restock-overlay'
+    ].forEach(id => {
       const ov = document.getElementById(id);
-      if (ov) { ov.style.display = 'none'; ov.classList.remove('open', 'active'); }
+      if (ov) { ov.style.display='none'; ov.classList.remove('open','active'); }
     });
 
-    // Restaurer l'interface principale si elle était masquée (mode vendeur)
+    // Restaurer l'interface principale
     ['top-nav','bot-nav','mob-header'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.style.removeProperty('display');
+      const el = document.getElementById(id); if(el) el.style.removeProperty('display');
     });
-    const cont = document.querySelector('.container'); if (cont) cont.style.removeProperty('display');
-    const foot = document.querySelector('footer');    if (foot) foot.style.removeProperty('display');
+    const cont = document.querySelector('.container'); if(cont) cont.style.removeProperty('display');
+    const foot = document.querySelector('footer');    if(foot) foot.style.removeProperty('display');
 
     // Retirer les classes admin
     document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('admin-visible'));
 
-    // Afficher l'écran de connexion proprement
-    document.getElementById('auth-overlay').style.display = 'flex';
-    document.getElementById('auth-step-pin').style.display = 'none';
-    document.getElementById('auth-step-accounts').style.display = '';
-
-    // Réinitialiser les états internes des modules
+    // Réinitialiser modules
     if (typeof SellerDash !== 'undefined') SellerDash._active = false;
-    if (typeof SellerMode !== 'undefined') SellerMode._active = false;
-    if (typeof SellerMode !== 'undefined') SellerMode._cart   = [];
+    if (typeof SellerMode !== 'undefined') { SellerMode._active=false; SellerMode._cart=[]; }
 
-    this.renderAccountsList();
-    this._dots();
+    // Déconnexion Supabase + afficher écran login
+    if (typeof CloudAuth !== 'undefined') CloudAuth.logout();
+    else {
+      const ov = document.getElementById('auth-overlay');
+      if (ov) ov.style.display = 'flex';
+    }
   },
   isAdmin() { return this.currentUser?.role === 'admin'; },
   async ensureDefaultAdmin() {
