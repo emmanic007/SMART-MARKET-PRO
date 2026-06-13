@@ -8941,29 +8941,26 @@ const CloudAuth = {
         auth: { persistSession: true, autoRefreshToken: true }
       });
 
-      // Vérifier la session existante EN PREMIER
+      // Écouter uniquement les déconnexions et refresh de token
+      // On ne gère pas SIGNED_IN ici pour éviter la boucle
+      this._client.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          this._isLoading = false;
+          this._session = null; this._owner = null; this._shop = null;
+          this._showAuthOverlay();
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          this._session = session;
+        }
+        // SIGNED_IN et INITIAL_SESSION ignorés — gérés par getSession() et login/register
+      });
+
+      // Vérifier la session existante au démarrage
       this._client.auth.getSession().then(({data}) => {
         if (data?.session) {
           this._session = data.session;
           this._loadUserContext(data.session.user);
         } else {
           this._showAuthOverlay();
-        }
-      });
-
-      // onAuthStateChange UNIQUEMENT pour les changements après l'init
-      // On ignore INITIAL_SESSION pour éviter le double appel
-      this._client.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'INITIAL_SESSION') return; // Géré par getSession ci-dessus
-        if (event === 'SIGNED_IN' && session && !this._isLoading) {
-          this._session = session;
-          await this._loadUserContext(session.user);
-        } else if (event === 'SIGNED_OUT') {
-          this._isLoading = false;
-          this._session = null; this._owner = null; this._shop = null;
-          this._showAuthOverlay();
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          this._session = session; // Juste mettre à jour la session, pas recharger
         }
       });
 
@@ -8980,11 +8977,15 @@ const CloudAuth = {
     btn.textContent = '⏳ Connexion...'; btn.disabled = true;
     this._setError(errEl,'');
     try {
-      const {data,error} = await this._client.auth.signInWithPassword({email,password});
+      // Bloquer onAuthStateChange pendant le login manuel
+      this._isLoading = true;
+      const {data, error} = await this._client.auth.signInWithPassword({email, password});
       if (error) throw error;
       this._session = data.session;
+      // Charger le contexte directement sans passer par onAuthStateChange
       await this._loadUserContext(data.user);
     } catch(e) {
+      this._isLoading = false;
       btn.textContent = '🔐 Se connecter'; btn.disabled = false;
       this._setError(errEl, this._friendlyError(e.message));
     }
@@ -9002,26 +9003,57 @@ const CloudAuth = {
     btn.textContent = '⏳ Création...'; btn.disabled = true;
     this._setError(errEl,'');
     try {
-      // Créer le compte Auth avec les métadonnées
-      // Le trigger handle_new_user() côté Supabase créera automatiquement
-      // le owner dans smp_owners et la boutique dans smp_shops
+      // 1. Créer le compte Auth avec métadonnées
       const {data, error} = await this._client.auth.signUp({
         email, password,
-        options: {
-          data: { nom, shop_name: shopNom }
-        }
+        options: { data: { nom, shop_name: shopNom } }
       });
       if (error) throw error;
 
-      // Attendre que le trigger ait eu le temps de s'exécuter (1 seconde)
-      await new Promise(r => setTimeout(r, 1500));
-
-      // Se connecter
+      // 2. Se connecter immédiatement
       const {data: loginData, error: loginErr} = await this._client.auth.signInWithPassword({email, password});
       if (loginErr) throw loginErr;
-
       this._session = loginData.session;
-      await this._loadUserContext(loginData.user);
+
+      // 3. Attendre que le trigger crée owner+shop (retry jusqu'à 10 secondes)
+      btn.textContent = '⏳ Configuration...';
+      let owner = null;
+      let shop  = null;
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        const {data: o} = await this._client
+          .from('smp_owners').select('*').eq('auth_id', loginData.user.id).single();
+        if (o) {
+          owner = o;
+          const {data: s} = await this._client
+            .from('smp_shops').select('*').eq('owner_id', o.id);
+          if (s && s.length > 0) { shop = s[0]; break; }
+        }
+      }
+
+      // 4. Si le trigger n'a pas créé les données → les créer manuellement
+      if (!owner) {
+        const {data: o, error: oe} = await this._client
+          .from('smp_owners').insert({auth_id: loginData.user.id, nom, email}).select().single();
+        if (oe) throw oe;
+        owner = o;
+      }
+      if (!shop) {
+        const {data: s, error: se} = await this._client
+          .from('smp_shops').insert({owner_id: owner.id, nom: shopNom, devise: 'F'}).select().single();
+        if (se) throw se;
+        shop = s;
+      }
+
+      // 5. Créer les données initiales de la boutique
+      await this._ensureShopData(shop.id, owner.id);
+
+      // 6. Entrer dans l'app directement sans passer par _loadUserContext
+      this._owner = owner;
+      this._shop  = shop;
+      this._isLoading = false;
+      await this._enterApp('admin', nom);
+
     } catch(e) {
       btn.textContent = '✅ Créer mon compte'; btn.disabled = false;
       this._setError(errEl, this._friendlyError(e.message));
