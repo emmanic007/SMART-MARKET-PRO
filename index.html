@@ -9181,11 +9181,22 @@ const CloudAuth = {
     Settings.data.currency = this._shop?.devise || 'F';
     Settings.save();
 
-    // Masquer l'overlay auth AVANT de charger les données
+    // Masquer l'overlay auth IMMÉDIATEMENT
     const overlay = document.getElementById('auth-overlay');
     if (overlay) overlay.style.display = 'none';
 
-    // Charger les données de la boutique
+    // Appliquer les droits selon le rôle
+    if (role === 'admin') {
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.add('admin-visible'));
+    } else {
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('admin-visible'));
+    }
+
+    // Mettre à jour le nom affiché dans la nav
+    const navU = document.getElementById('nav-username'); if(navU) navU.textContent = nom;
+    const mobU = document.getElementById('mob-username'); if(mobU) mobU.textContent = nom;
+
+    // Charger les données de la boutique depuis Supabase
     await Cloud.pullShop(this._shop.id, this._owner?.id || null);
 
     // Rafraîchir l'UI
