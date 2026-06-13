@@ -8930,6 +8930,7 @@ const CloudAuth = {
   _session: null,
   _owner: null,
   _shop: null,
+  _isLoading: false,  // Empêche les appels simultanés
 
   init() {
     const url = 'https://mgifpcfpcrbittidacwe.supabase.co';
@@ -8939,19 +8940,33 @@ const CloudAuth = {
       this._client = window.supabase.createClient(url, key, {
         auth: { persistSession: true, autoRefreshToken: true }
       });
-      this._client.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          this._session = session;
-          await this._loadUserContext(session.user);
-        } else if (event === 'SIGNED_OUT') {
-          this._session = null; this._owner = null; this._shop = null;
+
+      // Vérifier la session existante EN PREMIER
+      this._client.auth.getSession().then(({data}) => {
+        if (data?.session) {
+          this._session = data.session;
+          this._loadUserContext(data.session.user);
+        } else {
           this._showAuthOverlay();
         }
       });
-      this._client.auth.getSession().then(({data}) => {
-        if (data?.session) { this._session = data.session; this._loadUserContext(data.session.user); }
-        else { this._showAuthOverlay(); }
+
+      // onAuthStateChange UNIQUEMENT pour les changements après l'init
+      // On ignore INITIAL_SESSION pour éviter le double appel
+      this._client.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'INITIAL_SESSION') return; // Géré par getSession ci-dessus
+        if (event === 'SIGNED_IN' && session && !this._isLoading) {
+          this._session = session;
+          await this._loadUserContext(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          this._isLoading = false;
+          this._session = null; this._owner = null; this._shop = null;
+          this._showAuthOverlay();
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          this._session = session; // Juste mettre à jour la session, pas recharger
+        }
       });
+
     } catch(e) { console.error('[CloudAuth]',e); this._showAuthOverlay(); }
   },
 
@@ -9029,6 +9044,9 @@ const CloudAuth = {
   },
 
   async _loadUserContext(user) {
+    // Éviter les appels simultanés
+    if (this._isLoading) return;
+    this._isLoading = true;
     try {
       const {data:ownerData} = await this._client
         .from('smp_owners').select('*').eq('auth_id',user.id).single();
@@ -9090,6 +9108,8 @@ const CloudAuth = {
     } catch(e) {
       console.error('[CloudAuth]', e);
       this._showAuthOverlay();
+    } finally {
+      this._isLoading = false;
     }
   },
 
@@ -9128,12 +9148,23 @@ const CloudAuth = {
     Settings.data.shopName = this._shop?.nom || nom;
     Settings.data.currency = this._shop?.devise || 'F';
     Settings.save();
-    await Cloud.pullShop(this._shop.id, this._owner?.id || null);
+
+    // Masquer l'overlay auth AVANT de charger les données
     const overlay = document.getElementById('auth-overlay');
     if (overlay) overlay.style.display = 'none';
-    UI.renderAll(); Dashboard.refresh();
+
+    // Charger les données de la boutique
+    await Cloud.pullShop(this._shop.id, this._owner?.id || null);
+
+    // Rafraîchir l'UI
+    UI.renderAll();
+    Dashboard.refresh();
+
+    // Abonnement temps réel
     Cloud.subscribeShop(this._shop.id);
-    UI.toast(`${I18n.t('toast_welcome_back')}, ${nom} 👋`,'success');
+
+    UI.toast(`${I18n.t('toast_welcome_back')}, ${nom} 👋`, 'success');
+    this._isLoading = false;
   },
 
   _showShopSelector(shops) {
@@ -9202,19 +9233,32 @@ const CloudAuth = {
     const key   = document.getElementById('smp-anon-key-input')?.value.trim();
     const errEl = document.getElementById('smp-key-error');
     const btn   = document.getElementById('smp-key-btn');
-    if (!key||key.length<100) { errEl.textContent='Clé invalide — doit commencer par eyJ...'; return; }
-    btn.textContent='⏳ Vérification...'; btn.disabled=true;
+    if (!key || key.length < 20) {
+      errEl.textContent = 'Clé invalide — trop courte'; return;
+    }
+    // Accepter les deux formats : ancien (eyJ...) et nouveau (sb_publis... ou sb_secret...)
+    const isLegacy  = key.startsWith('eyJ');
+    const isNew     = key.startsWith('sb_');
+    if (!isLegacy && !isNew) {
+      errEl.textContent = 'Clé invalide — doit commencer par eyJ... ou sb_...'; return;
+    }
+    btn.textContent = '⏳ Vérification...'; btn.disabled = true;
+    errEl.textContent = '';
     try {
-      const tc = window.supabase.createClient('https://mgifpcfpcrbittidacwe.supabase.co',key);
+      const tc = window.supabase.createClient(
+        'https://mgifpcfpcrbittidacwe.supabase.co', key
+      );
       const {error} = await tc.from('smp_owners').select('id').limit(1);
-      if (error&&!['PGRST116','42501','42P01'].includes(error.code)) throw new Error(error.message);
-      localStorage.setItem('SMP_ANON_KEY',key);
+      if (error && !['PGRST116','42501','42P01','PGRST301'].includes(error.code)) {
+        throw new Error(error.message);
+      }
+      localStorage.setItem('SMP_ANON_KEY', key);
       const modal = document.getElementById('smp-key-config');
-      if (modal) modal.style.display='none';
+      if (modal) modal.style.display = 'none';
       this.init();
     } catch(e) {
-      errEl.textContent='Erreur : '+e.message;
-      btn.textContent='✅ Enregistrer et continuer'; btn.disabled=false;
+      errEl.textContent = 'Erreur : ' + e.message;
+      btn.textContent = '✅ Enregistrer et continuer'; btn.disabled = false;
     }
   },
 
