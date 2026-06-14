@@ -1574,23 +1574,49 @@ CREATE POLICY "public_access" ON smp_data
 <!-- ÉQUIPE -->
 <section id="users" class="page">
   <div class="page-header"><h1 class="page-title" data-i18n="team_title">Gestion <span>Équipe</span></h1></div>
-  <div class="card">
-    <div class="card-title">Créer un Compte</div>
-    <div class="form-grid">
-      <div class="form-group"><label class="form-label">Nom Complet *</label><input type="text" id="u-name"></div>
-      <div class="form-group"><label class="form-label">Code PIN (4 chiffres) *</label><input type="password" id="u-pin" maxlength="4" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">Confirmer PIN *</label><input type="password" id="u-pin2" maxlength="4" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">Rôle</label><select id="u-role"><option value="seller">Vendeur</option><option value="admin">Administrateur</option></select></div>
-    </div>
-    <button class="btn btn-primary mt-14" onclick="Users.add()">CRÉER LE COMPTE</button>
+
+  <!-- Info bulle -->
+  <div style="background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.25);border-radius:var(--rlg);padding:14px 16px;margin-bottom:16px;font-family:var(--fm);font-size:.78rem;color:var(--text2);line-height:1.6">
+    💡 <strong>Comment ça marche :</strong> Créez un compte vendeur avec email + mot de passe. 
+    Le vendeur pourra se connecter depuis <strong>n'importe quel téléphone</strong> et accéder à sa boutique. 
+    Toutes ses ventes remontent ici en temps réel.
   </div>
+
   <div class="card">
-    <div class="card-title">Comptes Utilisateurs</div>
-    <div class="table-wrap">
-      <table id="tableUsers">
-        <thead><tr><th data-i18n="lbl_name">Nom</th><th data-i18n="th_role">Rôle</th><th data-i18n="nav_sales">Ventes</th><th>CA Généré</th><th data-i18n="th_action">Action</th></tr></thead>
-        <tbody></tbody>
-      </table>
+    <div class="card-title">➕ Créer un Compte Vendeur</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Nom Complet *</label>
+        <input type="text" id="u-name" placeholder="Ex: Marie Dupont" maxlength="40">
+      </div>
+      <div class="form-group">
+        <label class="form-label">📧 Email *</label>
+        <input type="email" id="u-email" placeholder="vendeur@email.com" inputmode="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">🔒 Mot de passe * (min. 6 caractères)</label>
+        <input type="password" id="u-password" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rôle</label>
+        <select id="u-role">
+          <option value="seller">Vendeur</option>
+          <option value="admin">Administrateur</option>
+        </select>
+      </div>
+    </div>
+    <div id="u-error" style="color:var(--danger);font-size:.78rem;min-height:18px;margin-top:8px;font-family:var(--fm)"></div>
+    <button class="btn btn-primary mt-14" onclick="Users.add()" id="u-add-btn">
+      ✅ CRÉER LE COMPTE VENDEUR
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👥 Comptes de l'Équipe</div>
+    <div id="users-cloud-list">
+      <div style="text-align:center;padding:20px;color:var(--text3);font-family:var(--fm);font-size:.82rem">
+        Chargement...
+      </div>
     </div>
   </div>
 </section>
@@ -3602,22 +3628,10 @@ const UI = {
     se('v-stock-count',  DB.data.items.length);
   },
   renderUsers() {
-    const tbody = document.querySelector('#tableUsers tbody'); if(!tbody) return;
-    tbody.innerHTML = DB.data.users.map(u => {
-      const us = DB.activeSales().filter(s=>s.userId===u.id);
-      const ca = us.reduce((s,v)=>s+v.total,0);
-      const isSelf = Auth.currentUser?.id === u.id;
-      return `<tr>
-        <td class="fw-700">${Utils.esc(u.name)}</td>
-        <td><span class="badge ${u.role==='admin'?'badge-blue':'badge-gray'}">${u.role==='admin'?I18n.t('role_admin'):I18n.t('role_seller')}</span></td>
-        <td class="td-mono">${us.length}</td>
-        <td class="td-mono">${Utils.currency(ca)}</td>
-        <td style="display:flex;gap:4px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="Users.openEdit('${Utils.esc(u.id)}')" ${!Auth.isAdmin()?'disabled':''}>✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="Users.remove('${Utils.esc(u.id)}')" ${isSelf||!Auth.isAdmin()?'disabled':''}>Suppr.</button>
-        </td>
-      </tr>`;
-    }).join('');
+    // Déléguer au nouveau système cloud
+    if (typeof Users !== 'undefined' && typeof Users.renderCloud === 'function') {
+      Users.renderCloud();
+    }
   },
   updateItemSelect() {
     const sel = document.getElementById('s-item'); if(!sel) return;
@@ -4189,79 +4203,108 @@ const PinManager = {
 
 /* ═══════════════ USERS ═══════════════ */
 const Users = {
+
   async add() {
-    const name=document.getElementById('u-name')?.value.trim();
-    const pin=document.getElementById('u-pin')?.value;
-    const pin2=document.getElementById('u-pin2')?.value;
-    const role=document.getElementById('u-role')?.value;
-    if (!name)              return UI.toast(I18n.t('toast_err_name_required'),'danger');
-    if (name.length>50)     return UI.toast(I18n.t('toast_err_name_too_long'),'danger');
-    if (!pin||pin.length!==4) return UI.toast(I18n.t('toast_err_pin_4digits'),'danger');
-    if (!/^\d{4}$/.test(pin)) return UI.toast(I18n.t('toast_err_pin_digits'),'danger');
-    if (pin!==pin2)         return UI.toast(I18n.t('toast_err_pin_match2'),'danger');
-    const pinHash=await Utils.sha256(pin);
-    if (DB.data.users.some(u=>u.pinHash===pinHash)) return UI.toast(I18n.t('toast_err_pin_used'),'danger');
-    DB.data.users.push({id:Utils.uid(),name,pinHash,role:role||'seller',createdAt:new Date().toISOString()});
-    DB.save(); Cloud.pushAll(); UI.renderUsers();
-    UI.toast(`${I18n.t('toast_account_created')} : ${name}`,'success');
-    ['u-name','u-pin','u-pin2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  },
-  async remove(id) {
-    if (!Auth.isAdmin()) return UI.toast(I18n.t('toast_err_admin_required'),'danger');
-    if (id===Auth.currentUser?.id) return UI.toast(I18n.t('toast_err_delete_self'),'danger');
-    const t=DB.data.users.find(u=>u.id===id);
-    if (DB.data.users.filter(u=>u.role==='admin').length<=1&&t?.role==='admin') return UI.toast(I18n.t('toast_err_last_admin'),'danger');
-    if (!await SmpModal.confirm(`${I18n.t('modal_delete_account_title')} "${t?.name}" ?`, {title:I18n.t('modal_delete_account_title'), icon:'👤', okLabel:I18n.t('modal_delete_account_ok'), okClass:'btn-danger'})) return;
-    DB.data.users=DB.data.users.filter(u=>u.id!==id);
-    DB.save(); Cloud.pushAll(); UI.renderUsers();
-    UI.toast(I18n.t('toast_account_deleted'),'warning');
-  },
+    const name     = document.getElementById('u-name')?.value.trim();
+    const email    = document.getElementById('u-email')?.value.trim();
+    const password = document.getElementById('u-password')?.value;
+    const role     = document.getElementById('u-role')?.value || 'seller';
+    const errEl    = document.getElementById('u-error');
+    const btn      = document.getElementById('u-add-btn');
+    if (!name)                        { errEl.textContent = I18n.t('toast_err_name_required'); return; }
+    if (!email)                       { errEl.textContent = 'Email requis'; return; }
+    if (!password || password.length < 6) { errEl.textContent = 'Mot de passe : 6 caractères minimum'; return; }
+    errEl.textContent = '';
+    btn.textContent = '⏳ Création...'; btn.disabled = true;
 
-  openEdit(userId) {
-    const u = DB.data.users.find(x => x.id === userId);
-    if (!u) return;
-    const ov = document.getElementById('smp-edit-user-overlay');
-    const ni = document.getElementById('edit-user-id');
-    const nn = document.getElementById('edit-user-name');
-    const np = document.getElementById('edit-user-pin');
-    const er = document.getElementById('edit-user-error');
-    if (ni) ni.value = userId;
-    if (nn) nn.value = u.name;
-    if (np) np.value = '';
-    if (er) er.textContent = '';
-    if (ov) { ov.style.display = 'flex'; setTimeout(() => nn?.focus(), 100); }
-  },
-
-  closeEdit() {
-    const ov = document.getElementById('smp-edit-user-overlay');
-    if (ov) ov.style.display = 'none';
-  },
-
-  async saveEdit() {
-    const userId = document.getElementById('edit-user-id')?.value;
-    const name   = document.getElementById('edit-user-name')?.value.trim();
-    const pin    = document.getElementById('edit-user-pin')?.value;
-    const errEl  = document.getElementById('edit-user-error');
-    const u      = DB.data.users.find(x => x.id === userId);
-    if (!u) { this.closeEdit(); return; }
-    if (!name) { if (errEl) errEl.textContent = 'Le nom est requis.'; return; }
-    if (pin && (pin.length !== 4 || !/^[0-9]{4}$/.test(pin))) {
-      if (errEl) errEl.textContent = 'PIN invalide — 4 chiffres requis.'; return;
+    const shopId = CloudAuth.getShopId();
+    if (!shopId) {
+      errEl.textContent = 'Boutique non trouvée. Reconnectez-vous.';
+      btn.textContent = '✅ CRÉER LE COMPTE VENDEUR'; btn.disabled = false;
+      return;
     }
-    u.name = name;
-    if (pin) u.pinHash = await Utils.sha256(pin);
-    DB.save(); Cloud.pushAll();
-    UI.renderAll();
-    Auth.renderAccountsList();
-    UI.toast(`${I18n.t('toast_account_updated')} : ${name}`,'success');
-    this.closeEdit();
-  }
+
+    const result = await CloudAuth.createSeller(name, email, password, shopId);
+    btn.textContent = '✅ CRÉER LE COMPTE VENDEUR'; btn.disabled = false;
+
+    if (!result.ok) {
+      errEl.textContent = result.msg || 'Erreur lors de la création';
+      return;
+    }
+
+    UI.toast(`${I18n.t('toast_account_created')} : ${name}`, 'success');
+    ['u-name','u-email','u-password'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    await this.renderCloud();
+  },
+
+  async renderCloud() {
+    const container = document.getElementById('users-cloud-list');
+    if (!container) return;
+    const client  = CloudAuth.getClient();
+    const ownerId = CloudAuth.getOwnerId();
+    if (!client || !ownerId) {
+      container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text3);font-family:var(--fm);font-size:.82rem">${I18n.t('no_users')}</div>`;
+      return;
+    }
+    container.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text3);font-family:var(--fm);font-size:.82rem">⏳ Chargement...</div>`;
+    try {
+      const {data: sellers} = await client.from('smp_users').select('*').eq('owner_id', ownerId);
+      const {data: owner}   = await client.from('smp_owners').select('*').eq('id', ownerId).single();
+      const allUsers = [];
+      if (owner) allUsers.push({id:owner.id, nom:owner.nom, email:owner.email, role:'admin', isOwner:true});
+      if (sellers) sellers.forEach(s => allUsers.push({id:s.id, nom:s.nom, email:s.email, role:s.role, isOwner:false}));
+      if (allUsers.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text3);font-family:var(--fm);font-size:.82rem">${I18n.t('no_users')}</div>`;
+        return;
+      }
+      const salesByUser = {};
+      (DB.data.sales||[]).filter(s=>!s.deleted&&!s.returned).forEach(s => {
+        if (!salesByUser[s.userName]) salesByUser[s.userName]={count:0,ca:0};
+        salesByUser[s.userName].count++;
+        salesByUser[s.userName].ca += s.total||0;
+      });
+      container.innerHTML = allUsers.map(u => {
+        const stats = salesByUser[u.nom]||{count:0,ca:0};
+        const badge = u.role==='admin'
+          ? `<span style="background:rgba(0,232,122,.15);color:var(--accent);padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700">👑 Admin</span>`
+          : `<span style="background:rgba(59,158,255,.15);color:var(--info);padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700">🏪 Vendeur</span>`;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">
+          <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,232,122,.1);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">${u.role==='admin'?'👑':'🧑\u200d💼'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:.88rem">${Utils.esc(u.nom)}</div>
+            <div style="font-size:.72rem;color:var(--text3);font-family:var(--fm);margin-top:2px">${Utils.esc(u.email)}</div>
+            <div style="margin-top:4px">${badge}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:.78rem;font-weight:700;color:var(--accent)">${stats.count} ventes</div>
+            <div style="font-size:.7rem;color:var(--text3);font-family:var(--fm)">${Utils.currency(stats.ca)}</div>
+            ${!u.isOwner?`<button onclick="Users.removeSeller('${u.id}','${Utils.esc(u.nom)}')" style="margin-top:6px;background:none;border:1px solid var(--danger);border-radius:var(--rsm);color:var(--danger);font-size:.68rem;cursor:pointer;padding:2px 8px">Supprimer</button>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--danger);font-family:var(--fm);font-size:.82rem">Erreur : ${e.message}</div>`;
+    }
+  },
+
+  async removeSeller(sellerId, nom) {
+    if (!Auth.isAdmin()) return UI.toast(I18n.t('toast_err_admin_required'),'danger');
+    if (!await SmpModal.confirm(`Supprimer le compte de "${nom}" ? Cette action est définitive.`,
+      {title:'Supprimer le vendeur', icon:'👤', okLabel:'Supprimer', okClass:'btn-danger'})) return;
+    const client = CloudAuth.getClient();
+    if (!client) return;
+    try {
+      await client.from('smp_users').delete().eq('id', sellerId);
+      UI.toast(I18n.t('toast_account_deleted'),'warning');
+      await this.renderCloud();
+    } catch(e) { UI.toast('Erreur : ' + e.message,'danger'); }
+  },
+
+  async render() { await this.renderCloud(); },
 };
 
-/* ═══════════════ EXCEL EXPORT ═══════════════
-   Génère des fichiers CSV (ouvrable dans Excel,
-   LibreOffice, Google Sheets) sans dépendance externe
-   ═══════════════════════════════════════════════ */
 const ExcelExport = {
 
   /* Crée et télécharge un fichier CSV */
