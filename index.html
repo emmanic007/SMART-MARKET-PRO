@@ -72,8 +72,8 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 @keyframes aiDot{0%,80%,100%{transform:scale(.8);opacity:.5}40%{transform:scale(1.1);opacity:1}}
 
 /* AUTH */
-#auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .4s ease;}
-.auth-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--bord2);border-radius:var(--rxl);padding:40px 28px 28px;box-shadow:var(--shadow-lg);text-align:center;}
+#auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--bord2);border-radius:var(--rxl);padding:32px 24px 24px;box-shadow:var(--shadow-lg);text-align:center;max-height:90vh;overflow-y:auto;}
 .auth-logo{font-family:var(--fd);font-size:clamp(1.2rem,5vw,1.6rem);font-weight:800;color:var(--accent);letter-spacing:-.5px;margin-bottom:4px;}
 .auth-app-name{font-family:var(--fd);font-size:clamp(1.3rem,5vw,1.8rem);font-weight:800;color:var(--text);margin-bottom:2px;}
 .auth-sub{font-family:var(--fm);font-size:.67rem;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:24px;}
@@ -601,9 +601,22 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="auth-logo" id="auth-brand">Smart Market Pro</div>
     <div class="auth-sub">v7.7 Enterprise</div>
 
-    <!-- ÉCRAN 1 : Connexion email + mot de passe -->
-    <div id="auth-step-login">
-      <div style="font-family:var(--fm);font-size:.75rem;color:var(--text3);text-align:center;margin-bottom:20px">Connectez-vous à votre boutique</div>
+    <!-- ÉCRAN 0 : Choix du mode -->
+    <div id="auth-step-mode" style="display:none">
+      <div style="font-family:var(--fm);font-size:.78rem;color:var(--text2);text-align:center;margin-bottom:20px;line-height:1.7">Comment voulez-vous utiliser l'app ?</div>
+      <button class="btn btn-primary btn-full" style="margin-bottom:10px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 16px" onclick="CloudAuth.showLogin()">
+        <span style="font-size:.95rem;font-weight:700">☁️ Mode Cloud</span>
+        <span style="font-size:.68rem;font-weight:400;opacity:.85;white-space:normal;text-align:center">Multi-appareils · Sync temps réel · Internet requis</span>
+      </button>
+      <button class="btn btn-ghost btn-full" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 16px" onclick="HybridAuth.showLocalLogin()">
+        <span style="font-size:.95rem;font-weight:700">📱 Mode Local (PIN)</span>
+        <span style="font-size:.68rem;font-weight:400;opacity:.85;white-space:normal;text-align:center;color:var(--text2)">Fonctionne sans internet · Données sur cet appareil</span>
+      </button>
+    </div>
+
+    <!-- ÉCRAN 1 : Connexion cloud -->
+    <div id="auth-step-login" style="display:none">
+      <div style="font-family:var(--fm);font-size:.72rem;color:var(--text3);text-align:center;margin-bottom:16px">☁️ Connexion Cloud</div>
       <div class="form-group" style="margin-bottom:12px">
         <label class="form-label">📧 Email</label>
         <input type="email" id="auth-email" placeholder="votre@email.com" autocomplete="email" inputmode="email" style="text-align:left">
@@ -617,48 +630,35 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       </div>
       <div id="auth-error" class="auth-error" style="display:none"></div>
       <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="CloudAuth.login()" id="auth-login-btn">🔐 Se connecter</button>
-      <div style="text-align:center;margin-top:14px">
+      <div style="text-align:center;margin-top:12px">
         <button onclick="CloudAuth.showRegister()" style="background:none;border:none;color:var(--accent);font-size:.78rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Pas de compte ? Créer un compte</button>
       </div>
-      <div style="text-align:center;margin-top:8px">
+      <div style="text-align:center;margin-top:6px">
         <button onclick="CloudAuth.showForgot()" style="background:none;border:none;color:var(--text3);font-size:.72rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Mot de passe oublié ?</button>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <button onclick="HybridAuth.showModeChoice()" style="background:none;border:none;color:var(--text3);font-size:.68rem;cursor:pointer;font-family:var(--fm)">← Changer de mode</button>
       </div>
     </div>
 
-    <!-- ÉCRAN 2 : Créer un compte propriétaire -->
+    <!-- ÉCRAN 2 : Créer compte cloud -->
     <div id="auth-step-register" style="display:none">
       <div style="font-family:var(--fd);font-size:.9rem;font-weight:700;text-align:center;margin-bottom:16px">🏪 Créer votre compte</div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">Votre nom complet</label>
-        <input type="text" id="reg-nom" placeholder="Ex: Jean Emmanuel" maxlength="40">
-      </div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">📧 Email</label>
-        <input type="email" id="reg-email" placeholder="votre@email.com" inputmode="email">
-      </div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">🔒 Mot de passe (min. 6 caractères)</label>
-        <input type="password" id="reg-password" placeholder="••••••••">
-      </div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">🏪 Nom de votre boutique principale</label>
-        <input type="text" id="reg-shop" placeholder="Ex: Boutique Centrale" maxlength="40">
-      </div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Votre nom complet</label><input type="text" id="reg-nom" placeholder="Ex: Jean Emmanuel" maxlength="40"></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">📧 Email</label><input type="email" id="reg-email" placeholder="votre@email.com" inputmode="email"></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">🔒 Mot de passe (min. 6 caractères)</label><input type="password" id="reg-password" placeholder="••••••••"></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">🏪 Boutique principale</label><input type="text" id="reg-shop" placeholder="Ex: Boutique Centrale" maxlength="40"></div>
       <div id="reg-error" class="auth-error" style="display:none"></div>
       <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="CloudAuth.register()" id="reg-btn">✅ Créer mon compte</button>
       <div style="text-align:center;margin-top:12px">
-        <button onclick="CloudAuth.showLogin()" style="background:none;border:none;color:var(--text3);font-size:.75rem;cursor:pointer;font-family:var(--fm)">← Retour à la connexion</button>
+        <button onclick="CloudAuth.showLogin()" style="background:none;border:none;color:var(--text3);font-size:.75rem;cursor:pointer;font-family:var(--fm)">← Retour</button>
       </div>
     </div>
 
     <!-- ÉCRAN 3 : Mot de passe oublié -->
     <div id="auth-step-forgot" style="display:none">
-      <div style="font-family:var(--fd);font-size:.9rem;font-weight:700;text-align:center;margin-bottom:8px">🔑 Réinitialiser le mot de passe</div>
-      <div style="font-size:.75rem;color:var(--text3);text-align:center;margin-bottom:16px;font-family:var(--fm)">Un lien de réinitialisation sera envoyé à votre email</div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label class="form-label">📧 Email</label>
-        <input type="email" id="forgot-email" placeholder="votre@email.com" inputmode="email">
-      </div>
+      <div style="font-family:var(--fd);font-size:.9rem;font-weight:700;text-align:center;margin-bottom:8px">🔑 Réinitialiser</div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">📧 Email</label><input type="email" id="forgot-email" placeholder="votre@email.com" inputmode="email"></div>
       <div id="forgot-msg" style="font-size:.78rem;min-height:18px;margin-bottom:10px;text-align:center;font-family:var(--fm)"></div>
       <button class="btn btn-primary btn-full" onclick="CloudAuth.sendReset()" id="forgot-btn">📧 Envoyer le lien</button>
       <div style="text-align:center;margin-top:12px">
@@ -666,10 +666,52 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       </div>
     </div>
 
-    <!-- ÉCRAN 4 : Sélection de boutique (admin multi-boutiques) -->
+    <!-- ÉCRAN 4 : Sélection boutique -->
     <div id="auth-step-shops" style="display:none">
       <div style="font-family:var(--fd);font-size:.9rem;font-weight:700;text-align:center;margin-bottom:16px">🏪 Choisissez votre boutique</div>
       <div id="auth-shops-list"></div>
+    </div>
+
+    <!-- ÉCRAN 5 : Mode local — liste comptes PIN -->
+    <div id="auth-step-local" style="display:none">
+      <div style="font-family:var(--fm);font-size:.72rem;color:var(--text3);text-align:center;margin-bottom:12px">📱 Mode Local — Qui êtes-vous ?</div>
+      <div id="accounts-list" style="margin-bottom:14px"></div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button onclick="RecoveryManager.show()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Code oublié ?</button>
+        <span style="color:var(--text3);font-size:.7rem">·</span>
+        <button onclick="HybridAuth.showModeChoice()" style="background:none;border:none;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Mode Cloud</button>
+      </div>
+    </div>
+
+    <!-- ÉCRAN 6 : Saisie PIN -->
+    <div id="auth-step-pin" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button onclick="HybridAuth.backToLocalAccounts()" style="background:none;border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);cursor:pointer;font-size:.9rem;padding:4px 10px">← Retour</button>
+        <div style="text-align:center;flex:1">
+          <div id="auth-selected-name" style="font-family:var(--fd);font-weight:800;font-size:.95rem"></div>
+          <div id="auth-selected-role" style="font-family:var(--fm);font-size:.62rem;color:var(--text3);margin-top:2px"></div>
+        </div>
+        <div style="width:60px"></div>
+      </div>
+      <div class="pin-display">
+        <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="pin-grid">
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('1')">1</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('2')">2</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('3')">3</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('4')">4</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('5')">5</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('6')">6</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('7')">7</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('8')">8</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('9')">9</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('⌫')">⌫</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('0')">0</button>
+        <button class="pin-btn" type="button" onclick="Auth.pinInput('✓')" style="color:var(--accent)">✓</button>
+      </div>
+      <div class="auth-error" id="auth-pin-error"></div>
     </div>
 
     <div class="sync-badge" style="margin-top:16px">
@@ -8218,6 +8260,143 @@ const SellerMode = {
 };
 
 /* ═══════════════ RECOVERY MANAGER ═══════════════ */
+/* ═══════════════ HYBRID AUTH ═══════════════ */
+const HybridAuth = {
+  MODE_KEY: 'SMP_AUTH_MODE', // 'cloud' | 'local'
+
+  // Point d'entrée au démarrage
+  async start() {
+    const mode          = localStorage.getItem(this.MODE_KEY);
+    const hasLocalUsers = (DB.data.users || []).length > 0;
+    const hasCloudKey   = !!localStorage.getItem('SMP_ANON_KEY');
+
+    // Si mode local déjà choisi → aller direct au PIN sans attendre le SDK
+    if (mode === 'local') {
+      await Auth.ensureDefaultAdmin();
+      this.showLocalLogin();
+      return;
+    }
+
+    // Si clé cloud présente ET SDK déjà chargé → mode cloud direct
+    if (hasCloudKey && typeof window.supabase !== 'undefined') {
+      CloudAuth.init();
+      return;
+    }
+
+    // Si clé cloud présente mais SDK pas encore chargé → attendre brièvement
+    if (hasCloudKey) {
+      this._waitForSDKAndInit();
+      return;
+    }
+
+    // Aucune config → afficher le choix du mode IMMÉDIATEMENT
+    this.showModeChoice();
+  },
+
+  _waitForSDKAndInit() {
+    // Afficher d'abord le choix du mode pour ne pas bloquer l'utilisateur
+    this.showModeChoice();
+    let waited = 0;
+    const iv = setInterval(() => {
+      waited += 300;
+      if (typeof window.supabase !== 'undefined') {
+        clearInterval(iv);
+        CloudAuth.init(); // Si session active, entrera dans l'app automatiquement
+      } else if (waited >= 8000) {
+        clearInterval(iv);
+        // SDK non disponible — laisser l'utilisateur choisir
+        UI.toast('Mode hors ligne — choisissez votre mode de connexion', 'warning');
+      }
+    }, 300);
+  },
+
+  showModeChoice() {
+    const ov = document.getElementById('auth-overlay');
+    if (ov) ov.style.display = 'flex';
+    // Cacher tous les écrans
+    ['auth-step-login','auth-step-register','auth-step-forgot',
+     'auth-step-shops','auth-step-local','auth-step-pin'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    // Afficher l'écran de choix explicitement
+    const mode = document.getElementById('auth-step-mode');
+    if (mode) mode.style.display = 'block';
+  },
+
+  async showLocalLogin() {
+    localStorage.setItem(this.MODE_KEY, 'local');
+    await Auth.ensureDefaultAdmin();
+    this._showOnly('auth-step-local');
+    const ov = document.getElementById('auth-overlay');
+    if (ov) ov.style.display = 'flex';
+    Auth.renderAccountsList();
+  },
+
+  backToLocalAccounts() {
+    this._showOnly('auth-step-local');
+    Auth._buf = ''; Auth._pendingUser = null; Auth._dots();
+  },
+
+  enterLocalApp(user) {
+    Auth.currentUser = user;
+    const ov = document.getElementById('auth-overlay');
+    if (ov) ov.style.display = 'none';
+    if (user.role === 'admin') {
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.add('admin-visible'));
+    } else {
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('admin-visible'));
+    }
+    const navU = document.getElementById('nav-username'); if (navU) navU.textContent = user.name;
+    const mobU = document.getElementById('mob-username'); if (mobU) mobU.textContent = user.name;
+    this._trySyncBackground();
+    UI.renderAll(); Dashboard.refresh();
+    UI.toast(`${I18n.t('toast_welcome_back')}, ${user.name} 👋`, 'success');
+  },
+
+  async _trySyncBackground() {
+    if (!navigator.onLine) return;
+    const key = localStorage.getItem('SMP_ANON_KEY');
+    if (!key || typeof window.supabase === 'undefined') return;
+    try {
+      if (!CloudAuth._client) {
+        CloudAuth._client = window.supabase.createClient(
+          'https://mgifpcfpcrbittidacwe.supabase.co', key,
+          { auth: { persistSession: false } }
+        );
+      }
+      if (DB.data.shopId) {
+        await Cloud.pushAll();
+        Cloud.isOnline = true; Cloud._updateUI();
+      }
+    } catch(e) { console.log('[HybridAuth] Sync bg échouée'); }
+  },
+
+  _setupOfflineSync() {
+    window.addEventListener('online', async () => {
+      Cloud.isOnline = true; Cloud._updateUI();
+      UI.toast('✅ Internet rétabli — synchronisation...', 'info');
+      await this._trySyncBackground();
+      UI.toast('✅ Données synchronisées', 'success');
+    });
+    window.addEventListener('offline', () => {
+      Cloud.isOnline = false; Cloud._updateUI();
+      UI.toast('📱 Mode hors ligne — données sauvegardées localement', 'warning');
+    });
+  },
+
+  _showOnly(activeId) {
+    ['auth-step-mode','auth-step-login','auth-step-register',
+     'auth-step-forgot','auth-step-shops','auth-step-local','auth-step-pin'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = id === activeId ? 'block' : 'none';
+    });
+  },
+};
+
+/* ═══════════════ RECOVERY MANAGER ═══════════════ */
 const RecoveryManager = {
   MASTER_KEY: 'SMP_MASTER_V76',
 
@@ -8799,39 +8978,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     }, {passive:true});
   });
 
-  // 8. CloudAuth — initialisation principale
-  // Vérifie si la clé anon Supabase est déjà configurée
-  if (!localStorage.getItem('SMP_ANON_KEY')) {
-    // Premier lancement — demander la clé
-    // Attendre que Supabase SDK soit chargé
-    let waited = 0;
-    const waitSDK = setInterval(() => {
-      waited += 300;
-      if (typeof window.supabase !== 'undefined') {
-        clearInterval(waitSDK);
-        CloudAuth._showKeyConfig();
-      } else if (waited >= 10000) {
-        clearInterval(waitSDK);
-        // Pas de Supabase — afficher login quand même
-        CloudAuth._showAuthOverlay();
-      }
-    }, 300);
-  } else {
-    // Clé déjà configurée — initialiser CloudAuth
-    if (typeof window.supabase !== 'undefined') {
-      CloudAuth.init();
-    } else {
-      let waited = 0;
-      const waitSDK = setInterval(() => {
-        waited += 300;
-        if (typeof window.supabase !== 'undefined') {
-          clearInterval(waitSDK); CloudAuth.init();
-        } else if (waited >= 10000) {
-          clearInterval(waitSDK); CloudAuth._showAuthOverlay();
-        }
-      }, 300);
-    }
-  }
+  // 8. Démarrage hybride — immédiat, sans attendre le SDK
+  HybridAuth._setupOfflineSync();
+  HybridAuth.start();
 
   console.log('[SMP v7.7] ✅ Smart Market Pro démarré');
 });
@@ -9016,7 +9165,11 @@ const CloudAuth = {
     const errEl    = document.getElementById('auth-error');
     const btn      = document.getElementById('auth-login-btn');
     if (!email || !password) { this._setError(errEl,'Email et mot de passe requis'); return; }
-    if (!this._client) { this._setError(errEl,'Supabase non configuré'); return; }
+    if (!this._client) {
+      this._setError(errEl, 'Connexion Supabase non initialisée. Vérifiez votre clé API.');
+      btn.textContent = '✅ Créer mon compte'; btn.disabled = false;
+      return;
+    }
     btn.textContent = '⏳ Connexion...'; btn.disabled = true;
     this._setError(errEl,'');
     try {
@@ -9035,12 +9188,18 @@ const CloudAuth = {
   },
 
   async register() {
+    const errEl = document.getElementById('reg-error');
+    const btn   = document.getElementById('reg-btn');
+    // Vérification client AVANT tout
+    if (!this._client) {
+      this._setError(errEl, 'Connexion Supabase non initialisée. Entrez d\'abord votre clé API.');
+      if (btn) { btn.textContent = '✅ Créer mon compte'; btn.disabled = false; }
+      return;
+    }
     const nom      = document.getElementById('reg-nom')?.value.trim();
     const email    = document.getElementById('reg-email')?.value.trim();
     const password = document.getElementById('reg-password')?.value;
     const shopNom  = document.getElementById('reg-shop')?.value.trim();
-    const errEl    = document.getElementById('reg-error');
-    const btn      = document.getElementById('reg-btn');
     if (!nom||!email||!password||!shopNom) { this._setError(errEl,'Tous les champs sont requis'); return; }
     if (password.length < 6) { this._setError(errEl,'Mot de passe : 6 caractères minimum'); return; }
     btn.textContent = '⏳ Création...'; btn.disabled = true;
@@ -9358,29 +9517,34 @@ const CloudAuth = {
   _showAuthOverlay() {
     const overlay = document.getElementById('auth-overlay');
     if (overlay) overlay.style.display = 'flex';
-    this.showLogin();
+    if (localStorage.getItem(HybridAuth.MODE_KEY) === 'cloud') this.showLogin();
+    else HybridAuth.showModeChoice();
   },
 
   showLogin() {
-    const steps = ['auth-step-login','auth-step-register','auth-step-forgot','auth-step-shops'];
-    steps.forEach((id,i) => {
-      const el = document.getElementById(id); if(el) el.style.display = i===0 ? '' : 'none';
-    });
+    localStorage.setItem(HybridAuth.MODE_KEY, 'cloud');
+    // Vérifier si la clé anon est configurée
+    if (!localStorage.getItem('SMP_ANON_KEY')) {
+      // Pas de clé → demander d'abord
+      this._showKeyConfig();
+      return;
+    }
+    // Initialiser le client si pas encore fait
+    if (!this._client && typeof window.supabase !== 'undefined') {
+      const key = localStorage.getItem('SMP_ANON_KEY');
+      this._client = window.supabase.createClient(
+        'https://mgifpcfpcrbittidacwe.supabase.co', key,
+        { auth: { persistSession: true, autoRefreshToken: true } }
+      );
+    }
+    HybridAuth._showOnly('auth-step-login');
+    const ov = document.getElementById('auth-overlay');
+    if (ov) ov.style.display = 'flex';
     const errEl = document.getElementById('auth-error');
     if (errEl) errEl.style.display = 'none';
   },
-  showRegister() {
-    ['auth-step-login','auth-step-forgot','auth-step-shops'].forEach(id=>{
-      const el=document.getElementById(id); if(el) el.style.display='none';
-    });
-    const el=document.getElementById('auth-step-register'); if(el) el.style.display='';
-  },
-  showForgot() {
-    ['auth-step-login','auth-step-register','auth-step-shops'].forEach(id=>{
-      const el=document.getElementById(id); if(el) el.style.display='none';
-    });
-    const el=document.getElementById('auth-step-forgot'); if(el) el.style.display='';
-  },
+  showRegister() { HybridAuth._showOnly('auth-step-register'); },
+  showForgot()   { HybridAuth._showOnly('auth-step-forgot'); },
 
   togglePwd() {
     const inp = document.getElementById('auth-password');
@@ -9556,7 +9720,7 @@ const Auth = {
       const ld = JSON.parse(localStorage.getItem('SMP_PIN_LOCK') || '{"a":0,"u":0}');
       if (ld.u > Date.now()) {
         const secs = Math.ceil((ld.u - Date.now()) / 1000);
-        const errEl = document.getElementById('auth-error');
+        const errEl = document.getElementById('auth-pin-error');
         if (errEl) errEl.textContent = 'Compte verrouillé — réessayez dans ' + secs + 's';
         return;
       }
@@ -9566,7 +9730,7 @@ const Auth = {
     // Ne jamais chercher dans tous les users — chaque compte a son propre PIN
     const candidate = this._pendingUser;
     if (!candidate) {
-      const errEl = document.getElementById('auth-error');
+      const errEl = document.getElementById('auth-pin-error');
       if (errEl) errEl.textContent = 'Aucun compte sélectionné';
       return;
     }
@@ -9574,24 +9738,12 @@ const Auth = {
     if (found) {
       try { localStorage.setItem('SMP_PIN_LOCK', JSON.stringify({a:0,u:0})); } catch(_) {}
       try { localStorage.setItem('SMP_LAST_USER', found.id); } catch(_) {}
-      this.currentUser = found;
-      document.getElementById('auth-overlay').style.display = 'none';
-      if (found.role === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.classList.add('admin-visible'));
-      const navU = document.getElementById('nav-username'); if(navU) navU.textContent = found.name;
-      const mobU = document.getElementById('mob-username'); if(mobU) mobU.textContent = found.name;
-      Cloud.subscribeRealtime();
-      UI.renderAll();
-      Dashboard.refresh();
-      UI.toast(`${I18n.t('toast_welcome_back')}, ${found.name}`,'success');
-      // Relancer le timer EOD après connexion
-      if (found.role === 'admin' && typeof EODSummary !== 'undefined') {
-        EODSummary.schedule();
-      }
+      HybridAuth.enterLocalApp(found);
+      if (found.role === 'admin' && typeof EODSummary !== 'undefined') EODSummary.schedule();
       if (found.role !== 'admin') {
         setTimeout(() => {
-          if (typeof SellerDash !== 'undefined') {
-            SellerDash.show();
-          } else if (typeof SellerMode !== 'undefined') {
+          if (typeof SellerDash !== 'undefined') SellerDash.show();
+          else if (typeof SellerMode !== 'undefined') {
             const _sn = document.getElementById('sm-shop-name');
             const _sl = document.getElementById('sm-seller-name');
             if (_sn) _sn.textContent = Settings.data.shopName || 'Smart Market Pro';
@@ -9623,6 +9775,8 @@ const Auth = {
   renderAccountsList() {
     const list = document.getElementById('accounts-list');
     if (!list) return;
+    // S'assurer que l'écran local est visible
+    HybridAuth._showOnly('auth-step-local');
     const users = DB.data.users || [];
 
     if (!users.length) {
@@ -9742,22 +9896,16 @@ const Auth = {
   },
 
   _showPinStep(user) {
-    document.getElementById('auth-step-accounts').style.display = 'none';
-    document.getElementById('auth-step-pin').style.display = '';
+    HybridAuth._showOnly('auth-step-pin');
     const nameEl = document.getElementById('auth-selected-name');
     const roleEl = document.getElementById('auth-selected-role');
     if (nameEl) nameEl.textContent = user.name;
     if (roleEl) roleEl.textContent = user.role === 'admin' ? '👑 Administrateur' : '👤 Vendeur';
     this._buf = ''; this._dots();
-    document.getElementById('auth-error').textContent = '';
+    const pe = document.getElementById('auth-pin-error'); if(pe) pe.textContent = '';
   },
 
-  backToAccounts() {
-    document.getElementById('auth-step-pin').style.display = 'none';
-    document.getElementById('auth-step-accounts').style.display = '';
-    this._pendingUser = null;
-    this._buf = ''; this._dots();
-  },
+  backToAccounts() { HybridAuth.backToLocalAccounts(); },
 
   showDemoMode() {
     // Charge des données fictives pour démo
@@ -9851,12 +9999,10 @@ const Auth = {
     if (typeof SellerDash !== 'undefined') SellerDash._active = false;
     if (typeof SellerMode !== 'undefined') { SellerMode._active=false; SellerMode._cart=[]; }
 
-    // Déconnexion Supabase + afficher écran login
-    if (typeof CloudAuth !== 'undefined') CloudAuth.logout();
-    else {
-      const ov = document.getElementById('auth-overlay');
-      if (ov) ov.style.display = 'flex';
-    }
+    // Déconnexion selon le mode choisi
+    const _mode = localStorage.getItem(HybridAuth.MODE_KEY);
+    if (_mode === 'cloud' && typeof CloudAuth !== 'undefined') CloudAuth.logout();
+    else HybridAuth.showLocalLogin();
   },
   isAdmin() { return this.currentUser?.role === 'admin'; },
   async ensureDefaultAdmin() {
