@@ -1668,7 +1668,14 @@ CREATE POLICY "public_access" ON smp_data
   <div class="page-header"><h1 class="page-title" data-i18n="system_title">Système <span>&amp; Données</span></h1></div>
   <div class="config-grid">
     <div class="config-block"><h4 data-i18n="local_backup">💾 Backup Local</h4><p data-i18n="lbl_optional_desc">Exporte en JSON (sauvegarde) ou CSV (Excel).</p><button class="btn btn-ghost btn-full" onclick="DataManager.downloadBackup()">📦 JSON (backup)</button><button class="btn btn-ghost btn-full" onclick="DataManager.downloadCSV()" style="margin-top:6px">📊 CSV (Excel)</button></div>
-    <div class="config-block"><h4 data-i18n="restore">📥 Restaurer</h4><p>Importe un backup JSON.</p><label class="btn btn-ghost btn-full" style="cursor:pointer" data-i18n="btn_restore">Importer<input type="file" id="import-file" accept=".json" onchange="DataManager.importBackup(event)" style="display:none"></label></div>
+    <div class="config-block">
+      <h4 data-i18n="restore">📥 Restaurer</h4>
+      <p style="font-size:.76rem;color:var(--text3);margin-bottom:10px">Importe un backup JSON pour restaurer toutes vos données.</p>
+      <input type="file" id="import-file" accept=".json" onchange="DataManager.importBackup(event)" style="display:none">
+      <button class="btn btn-ghost btn-full" onclick="document.getElementById('import-file').click()" data-i18n="btn_restore">
+        📂 Importer un backup
+      </button>
+    </div>
     <div class="config-block"><h4 data-i18n="cloud_sync">☁️ Serveur Cloud</h4><p id="cloud-status-text">Non configuré</p><div id="cloud-info" style="font-family:var(--fm);font-size:.73rem;margin-bottom:8px"></div><button class="btn btn-info btn-full" onclick="CloudConfig.open()" data-i18n="btn_configure">⚙️ Configurer Supabase</button></div>
     <div class="config-block"><h4 data-i18n="danger_zone">🚨 Zone Danger</h4>
       <p style="font-size:.76rem;color:var(--text3);margin-bottom:10px" data-i18n="danger_zone_desc">Ces actions sont irréversibles.</p>
@@ -4660,7 +4667,10 @@ const DataManager = {
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
     a.download=`${prefix}Backup_${new Date().toISOString().slice(0,10)}.json`;
-    a.click(); URL.revokeObjectURL(a.href);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
     const ts=new Date().toLocaleString('fr-FR'); localStorage.setItem('SMP_LAST_BACKUP',ts);
     const el=document.getElementById('last-backup-time'); if(el) el.textContent=ts;
     UI.toast(I18n.t('toast_backup_ok'),'success');
@@ -5500,10 +5510,10 @@ Que souhaitez-vous analyser ?`;
       </div>`;
 
     const anoms=[];
-    outOfStk.forEach(i=>anoms.push({type:'danger',msg:`<strong>${i.name}</strong> épuisé — ventes bloquées, commandez immédiatement`}));
-    negMrg.forEach(i=>anoms.push({type:'danger',msg:`<strong>${i.name}</strong> vendu à perte (${i.buy-i.sell}${curr}/unité) — ajustez le prix`}));
+    outOfStk.forEach(i=>anoms.push({type:'danger',msg:`<strong>${Utils.esc(i.name)}</strong> épuisé — ventes bloquées, commandez immédiatement`}));
+    negMrg.forEach(i=>anoms.push({type:'danger',msg:`<strong>${Utils.esc(i.name)}</strong> vendu à perte (${i.buy-i.sell}${curr}/unité) — ajustez le prix`}));
     if(debt>ca*0.3&&ca>0)anoms.push({type:'danger',msg:`Dettes = ${(debt/ca*100).toFixed(0)}% du CA — risque financier élevé`});
-    critical.forEach(i=>anoms.push({type:'warn',msg:`Stock faible : <strong>${i.name}</strong> (${i.qty} restant${i.qty>1?'s':', planifiez le réappro'})`}));
+    critical.forEach(i=>anoms.push({type:'warn',msg:`Stock faible : <strong>${Utils.esc(i.name)}</strong> (${i.qty} restant${i.qty>1?'s':', planifiez le réappro'})`}));
     if(parseFloat(margin)<10&&ca>0)anoms.push({type:'warn',msg:`Marge globale faible : ${margin}% (recommandé : >15%)`});
 
     if(anomalies) anomalies.innerHTML=anoms.length?anoms.map(a=>`<div class="alert-item alert-${a.type}" style="margin-bottom:6px">${a.type==='danger'?'🔴':'🟡'} ${a.msg}</div>`).join(''):`<div style="color:var(--accent);font-weight:600;padding:12px;background:rgba(0,232,122,.08);border-radius:var(--rsm)">✅ <strong>Aucune anomalie détectée</strong> — votre commerce fonctionne parfaitement !</div>`;
@@ -6283,7 +6293,7 @@ const CloudConfig = {
     );
     if (download) {
       UI.toast(I18n.t('toast_pulling'),'info');
-      const ok = await Cloud.pullAll();
+      const ok = await Cloud.pullShop(DB.data.shopId, DB.data.ownerId);
       if (ok) {
         UI.renderAll(); Dashboard.refresh();
         UI.toast(I18n.t('toast_cloud_synced'),'success');
@@ -6323,7 +6333,7 @@ const CloudConfig = {
     const ok2 = await SmpModal.confirm(I18n.t('modal_cloud_download_msg'));
     if (!ok2) return;
     UI.toast(I18n.t('toast_downloading'),'info');
-    const ok = await Cloud.pullAll();
+    const ok = await Cloud.pullShop(DB.data.shopId, DB.data.ownerId);
     if (ok) { UI.renderAll(); Dashboard.refresh(); UI.toast(I18n.t('toast_cloud_pull_ok'),'success'); }
     else UI.toast(I18n.t('toast_cloud_error'),'danger');
   },
@@ -6555,11 +6565,11 @@ const BizImport = {
         else                    this._parseTXT(content);
 
         document.getElementById('biz-file-info').innerHTML =
-          `<span style="color:var(--accent)">✅ ${file.name} chargé — ${this._data.length} lignes, ${this._headers.length} colonnes</span>`;
+          `<span style="color:var(--accent)">✅ ${Utils.esc(file.name)} chargé — ${this._data.length} lignes, ${this._headers.length} colonnes</span>`;
         this._showMapping();
       } catch(e) {
         document.getElementById('biz-file-info').innerHTML =
-          `<span style="color:var(--danger)">❌ Erreur de lecture: ${e.message}</span>`;
+          `<span style="color:var(--danger)">❌ Erreur de lecture: ${Utils.esc(e.message)}</span>`;
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -9593,8 +9603,44 @@ const Cloud = {
   },
 
   async pushAll() {
-    if (!this._client||!DB.data.shopId) return;
+    if (!this._client || !DB.data.shopId) return;
     try {
+      // Étape 1 : Vérifier l'horodatage distant avant d'écraser
+      const {data: remote} = await this._client
+        .from('smp_data')
+        .select('updated_at')
+        .eq('shop_id', DB.data.shopId)
+        .single();
+
+      if (remote && remote.updated_at) {
+        const remoteTime = new Date(remote.updated_at).getTime();
+        const lastSync   = DB.data.lastSync ? new Date(DB.data.lastSync).getTime() : 0;
+
+        // Si le serveur a été modifié APRÈS notre dernière sync → conflit potentiel
+        if (remoteTime > lastSync + 5000) { // 5 secondes de tolérance
+          const confirmed = await SmpModal.confirm(
+            I18n._lang === 'en'
+              ? 'More recent data exists on the server. Send your local data anyway? Server data will be overwritten.'
+              : 'Des données plus récentes existent sur le serveur. Envoyer quand même vos données locales ? Les données du serveur seront écrasées.',
+            {
+              title: I18n._lang === 'en' ? '⚠️ Sync Conflict' : '⚠️ Conflit de synchronisation',
+              icon: '⚠️',
+              okLabel: I18n._lang === 'en' ? 'Send anyway' : 'Envoyer quand même',
+              okClass: 'btn-warning',
+              cancelLabel: I18n._lang === 'en' ? 'Cancel' : 'Annuler'
+            }
+          );
+          if (!confirmed) {
+            UI.toast(
+              I18n._lang === 'en' ? 'Sync cancelled — local data preserved' : 'Sync annulée — données locales conservées',
+              'warning'
+            );
+            return;
+          }
+        }
+      }
+
+      // Étape 2 : Envoyer les données
       await this._client.from('smp_data').upsert({
         shop_id:          DB.data.shopId,
         owner_id:         DB.data.ownerId,
@@ -9608,17 +9654,32 @@ const Cloud = {
         categories:       JSON.stringify(DB.data.categories       || []),
         cash_init:        DB.data.cashInit || 0,
         updated_at:       new Date().toISOString()
-      },{onConflict:'shop_id'});
-    } catch(e) { console.error('[Cloud] pushAll:',e); }
+      }, {onConflict: 'shop_id'});
+
+      // Mettre à jour lastSync après push réussi
+      DB.data.lastSync = new Date().toISOString();
+      localStorage.setItem(DB.KEY, JSON.stringify(DB.data));
+
+    } catch(e) { console.error('[Cloud] pushAll:', e); }
   },
 
   subscribeShop(shopId) {
-    if (!this._client||!shopId) return;
-    this._client.channel('smp-shop-'+shopId)
-      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'smp_data',filter:`shop_id=eq.${shopId}`},
+    if (!this._client || !shopId) return;
+    this._client.channel('smp-shop-' + shopId)
+      .on('postgres_changes', {event:'UPDATE', schema:'public', table:'smp_data', filter:`shop_id=eq.${shopId}`},
         async payload => {
           if (!payload.new) return;
           try {
+            // Ne pas écraser si l'utilisateur a des modifications locales non synchronisées
+            if (DB._dirty) {
+              UI.toast(
+                I18n._lang === 'en'
+                  ? '⚠️ Server update received — sync your local data first'
+                  : '⚠️ Mise à jour serveur reçue — synchronisez d\'abord vos données locales',
+                'warning'
+              );
+              return;
+            }
             DB.data.items           = JSON.parse(payload.new.items            || '[]');
             DB.data.sales           = JSON.parse(payload.new.sales            || '[]');
             DB.data.expenses        = JSON.parse(payload.new.expenses         || '[]');
@@ -9626,9 +9687,11 @@ const Cloud = {
             DB.data.loyalty         = JSON.parse(payload.new.loyalty          || '{}');
             DB.data.commissionsPaid = JSON.parse(payload.new.commissions_paid || '{}');
             DB.data.suppliers       = JSON.parse(payload.new.suppliers        || '[]');
+            DB.data.lastSync        = payload.new.updated_at;
+            DB._dirty = false;
             DB.save(); UI.renderAll(); Dashboard.refresh();
-            UI.toast(I18n.t('toast_cloud_synced'),'info');
-          } catch(e) { console.error('[Cloud RT]',e); }
+            UI.toast(I18n.t('toast_cloud_synced'), 'info');
+          } catch(e) { console.error('[Cloud RT]', e); }
         }
       ).subscribe();
   },
@@ -9682,9 +9745,11 @@ const DB = {
     try {
       this.data.lastSync = new Date().toISOString();
       localStorage.setItem(this.KEY, JSON.stringify(this.data));
+      // Marquer comme modifié localement (non encore synchronisé)
+      this._dirty = true;
       // Push vers Supabase en arrière-plan si connecté
       if (typeof Cloud !== 'undefined' && this.data.shopId) {
-        Cloud.pushAll().catch(e => console.warn('[DB] push cloud:', e));
+        Cloud.pushAll().then(() => { this._dirty = false; }).catch(e => console.warn('[DB] push cloud:', e));
       }
     } catch(e) { try { UI.toast(I18n.t('toast_err_storage_low'),'danger'); } catch(_) { console.error('[DB] save:',e); } }
   },
