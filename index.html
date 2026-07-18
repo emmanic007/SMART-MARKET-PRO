@@ -16,6 +16,7 @@
 (function(){
   function loadScript(src, onload, onerror){ var s=document.createElement('script'); s.src=src; s.async=true; s.onload=onload||null; s.onerror=onerror||null; document.head.appendChild(s); }
   loadScript('https://cdn.jsdelivr.net/npm/chart.js', null, function(){ window.Chart=null; console.warn('[SMP] Chart.js non disponible - mode hors ligne'); });
+  loadScript('https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js', function(){ console.log('[SMP] SheetJS chargé'); }, function(){ console.warn('[SMP] SheetJS non disponible - export CSV fallback'); });
   loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
     function(){ (console.log||function(){})('[SMP] Supabase SDK chargé'); },
     function(){ window.supabase=null; console.warn('[SMP] Supabase non disponible - mode hors ligne'); }
@@ -616,6 +617,9 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 
     <!-- ÉCRAN 1 : Connexion cloud -->
     <div id="auth-step-login" style="display:none">
+      <div style="text-align:left;margin-bottom:14px">
+        <button onclick="HybridAuth.showModeChoice()" style="background:none;border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);cursor:pointer;font-size:.78rem;padding:5px 12px;font-family:var(--fm)">← Retour</button>
+      </div>
       <div style="font-family:var(--fm);font-size:.72rem;color:var(--text3);text-align:center;margin-bottom:16px">☁️ Connexion Cloud</div>
       <div class="form-group" style="margin-bottom:12px">
         <label class="form-label">📧 Email</label>
@@ -635,9 +639,6 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       </div>
       <div style="text-align:center;margin-top:6px">
         <button onclick="CloudAuth.showForgot()" style="background:none;border:none;color:var(--text3);font-size:.72rem;cursor:pointer;font-family:var(--fm);text-decoration:underline">Mot de passe oublié ?</button>
-      </div>
-      <div style="text-align:center;margin-top:8px">
-        <button onclick="HybridAuth.showModeChoice()" style="background:none;border:none;color:var(--text3);font-size:.68rem;cursor:pointer;font-family:var(--fm)">← Changer de mode</button>
       </div>
     </div>
 
@@ -1050,24 +1051,26 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       <div id="def-date-info" style="font-family:var(--fm);font-size:.72rem;color:var(--text3);margin-top:8px;min-height:16px"></div>
     </div>
 
-    <!-- Résumé en cours -->
-    <div class="deferred-summary" id="def-summary" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-family:var(--fm);font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Résumé en cours</div>
-          <div style="font-family:var(--fd);font-weight:800;font-size:1.1rem;color:var(--accent)" id="def-total-display">0 F</div>
+    <!-- Résumé + bouton Ajouter en haut -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+      <div class="deferred-summary" id="def-summary" style="flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-family:var(--fm);font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Résumé en cours</div>
+            <div style="font-family:var(--fd);font-weight:800;font-size:1.1rem;color:var(--accent)" id="def-total-display">0 F</div>
+          </div>
+          <div style="font-family:var(--fm);font-size:.72rem;color:var(--text2)" id="def-lines-info">0 ligne(s)</div>
         </div>
-        <div style="font-family:var(--fm);font-size:.72rem;color:var(--text2)" id="def-lines-info">0 ligne(s)</div>
       </div>
+      <button class="btn btn-ghost" style="white-space:nowrap" onclick="DeferredSales.addLine()">+ Ajouter une ligne</button>
     </div>
 
     <!-- Lignes de vente -->
     <div id="def-lines-container"></div>
 
-    <!-- Boutons -->
-    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="btn btn-ghost" style="flex:1" onclick="DeferredSales.addLine()">+ Ajouter une ligne</button>
-      <button class="btn btn-primary" style="flex:1;min-width:160px" id="def-submit-btn" onclick="DeferredSales.submit()" disabled>
+    <!-- Bouton Enregistrer en bas -->
+    <div style="margin-top:10px;margin-bottom:20px">
+      <button class="btn btn-primary btn-full" id="def-submit-btn" onclick="DeferredSales.submit()" disabled>
         ✅ Enregistrer tout
       </button>
     </div>
@@ -3685,12 +3688,42 @@ const UI = {
   updateItemSelect() {
     const sel = document.getElementById('s-item'); if(!sel) return;
     const cur = sel.value;
-    const avail = DB.data.items.filter(i=>i.qty>0);
+    // Trier A→Z
+    const avail = [...DB.data.items.filter(i=>i.qty>0)]
+      .sort((a,b) => a.name.localeCompare(b.name, 'fr', {sensitivity:'base'}));
     sel.innerHTML = avail.length
-      ? avail.map(i=>`<option value="${Utils.esc(i.id)}">${Utils.esc(i.name)} (dispo: ${i.qty})</option>`).join('')
+      ? `<option value="">— Choisir un article —</option>` +
+        avail.map(i=>`<option value="${Utils.esc(i.id)}">${Utils.esc(i.name)} (dispo: ${i.qty})</option>`).join('')
       : `<option value="">— ${I18n.t('no_stock')} —</option>`;
     if (cur) sel.value = cur;
+
+    // Ajouter champ de recherche si pas encore présent
+    let searchEl = document.getElementById('s-item-search');
+    if (!searchEl) {
+      searchEl = document.createElement('input');
+      searchEl.id = 's-item-search';
+      searchEl.type = 'text';
+      searchEl.placeholder = '🔍 Rechercher un article...';
+      searchEl.style.cssText = 'margin-bottom:6px;font-size:.82rem';
+      searchEl.setAttribute('autocomplete','off');
+      searchEl.oninput = () => UI._filterItemSelect(searchEl.value);
+      sel.parentNode.insertBefore(searchEl, sel);
+    }
     Sales.syncFields();
+  },
+
+  _filterItemSelect(query) {
+    const sel = document.getElementById('s-item'); if(!sel) return;
+    const q = query.trim().toLowerCase();
+    const avail = [...DB.data.items.filter(i=>i.qty>0)]
+      .sort((a,b) => a.name.localeCompare(b.name,'fr',{sensitivity:'base'}));
+    const filtered = q ? avail.filter(i => i.name.toLowerCase().includes(q)) : avail;
+    const cur = sel.value;
+    sel.innerHTML = filtered.length
+      ? `<option value="">— Choisir —</option>` +
+        filtered.map(i=>`<option value="${Utils.esc(i.id)}">${Utils.esc(i.name)} (dispo: ${i.qty})</option>`).join('')
+      : `<option value="">— Aucun résultat —</option>`;
+    if (cur) sel.value = cur;
   },
 
   updateCategorySelect() {
@@ -4356,309 +4389,281 @@ const Users = {
 
 const ExcelExport = {
 
-  /* Crée et télécharge un fichier CSV */
-  _download(filename, rows) {
-    const BOM = '\uFEFF'; // BOM UTF-8 pour Excel
+  /* ── Télécharger un fichier Excel (.xlsx) via SheetJS ── */
+  _download(filename, sheets) {
+    // sheets = [{name, data, headers}]
+    try {
+      if (typeof XLSX === 'undefined') {
+        // Fallback CSV si SheetJS non chargé
+        this._downloadCSV(filename.replace('.xlsx','.csv'), sheets[0].data);
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      sheets.forEach(({name, data, headers, colWidths}) => {
+        // Créer la feuille
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        // Largeurs de colonnes
+        if (colWidths) ws['!cols'] = colWidths.map(w=>({wch:w}));
+        XLSX.utils.book_append_sheet(wb, ws, name.substring(0,31));
+      });
+      XLSX.writeFile(wb, filename);
+      UI.toast(I18n.t('toast_export_excel'),'success');
+    } catch(e) {
+      console.error('[Excel]', e);
+      UI.toast('Erreur export: ' + e.message, 'danger');
+    }
+  },
+
+  /* Fallback CSV si SheetJS absent */
+  _downloadCSV(filename, rows) {
+    const BOM = '\uFEFF';
     const csv = BOM + rows.map(row =>
       row.map(cell => {
         const s = String(cell ?? '');
-        // Escape cells containing comma, quote or newline
         return (s.includes(',') || s.includes('"') || s.includes('\n'))
-          ? '"' + s.replace(/"/g, '""') + '"'
-          : s;
+          ? '"' + s.replace(/"/g, '""') + '"' : s;
       }).join(',')
     ).join('\r\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const a    = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
     a.download = filename;
-    a.click();
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
     UI.toast(I18n.t('toast_export_excel'),'success');
   },
 
-  /* Rapport Journalier */
+  /* ── Rapport Journalier ── */
   daily() {
-    const today = new Date().toDateString();
-    const sales = DB.activeSales().filter(s => new Date(s.date).toDateString() === today);
-    const shop  = Settings.data.shopName || 'Smart Market Pro';
-    const curr  = Settings.getCurrency();
+    const today  = new Date().toDateString();
+    const sales  = DB.activeSales().filter(s => new Date(s.date).toDateString() === today);
+    const shop   = Settings.data.shopName || 'Smart Market Pro';
+    const curr   = Settings.getCurrency();
     const dateStr = new Date().toLocaleDateString('fr-FR');
+    const ca     = sales.reduce((s,v)=>s+v.total,0);
+    const profit = sales.reduce((s,v)=>s+(v.profit||0),0);
+    const dettes = sales.reduce((s,v)=>s+v.debt,0);
 
-    const rows = [
+    const data = [
       [shop + ' — Rapport Journalier', dateStr],
       [],
-      ['RÉSUMÉ'],
-      ['CA Total',     sales.reduce((s,v)=>s+v.total,0) + ' ' + curr],
-      ['Profit Net',   sales.reduce((s,v)=>s+v.profit,0) + ' ' + curr],
-      ['Dettes',       sales.reduce((s,v)=>s+v.debt,0) + ' ' + curr],
-      ['Nb Ventes',    sales.length],
+      ['RÉSUMÉ DU JOUR'],
+      ['CA Total', ca + ' ' + curr],
+      ['Profit Net', profit + ' ' + curr],
+      ['Dettes', dettes + ' ' + curr],
+      ['Nombre de ventes', sales.length],
       [],
       ['DÉTAIL DES VENTES'],
-      [I18n.t('th_time'),I18n.t('th_seller'),I18n.t('th_product'),I18n.t('th_qty'),I18n.t('th_price'),I18n.t('th_total'),I18n.t('debt_lbl'),I18n.t('th_client')],
+      ['Heure','Vendeur','Article','Qté','Prix Unit.','Total','Dette','Client'],
       ...sales.map(s => [
         new Date(s.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
-        s.userName, s.itemName, s.qty,
-        s.price + ' ' + curr, s.total + ' ' + curr,
-        s.debt + ' ' + curr, s.clientName || ''
+        s.userName||'', s.itemName||'', s.qty,
+        s.price+' '+curr, s.total+' '+curr,
+        s.debt+' '+curr, s.clientName||''
       ])
     ];
-    this._download('Rapport_Journalier_' + dateStr.split('/').join('-') + '.csv', rows);
+
+    this._download('Rapport_Journalier_'+dateStr.split('/').join('-')+'.xlsx', [
+      {name:'Rapport Journalier', data, colWidths:[12,15,20,6,12,12,12,15]}
+    ]);
   },
 
-  /* Rapport Mensuel */
+  /* ── Rapport Mensuel ── */
   monthly() {
     const now   = new Date();
     const sales = DB.activeSales().filter(s => {
       const d = new Date(s.date);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
     });
-    const shop   = Settings.data.shopName || 'Smart Market Pro';
-    const curr   = Settings.getCurrency();
-    const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-    const monthStr = months[now.getMonth()] + ' ' + now.getFullYear();
+    const shop  = Settings.data.shopName || 'Smart Market Pro';
+    const curr  = Settings.getCurrency();
+    const mois  = now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    const ca    = sales.reduce((s,v)=>s+v.total,0);
+    const profit= sales.reduce((s,v)=>s+(v.profit||0),0);
+    const dettes= sales.reduce((s,v)=>s+v.debt,0);
 
-    // Group by day
-    const byDay = {};
-    sales.forEach(s => {
-      const d = new Date(s.date).toLocaleDateString('fr-FR');
-      if (!byDay[d]) byDay[d] = { ca:0, profit:0, debt:0, count:0 };
-      byDay[d].ca     += s.total;
-      byDay[d].profit += s.profit;
-      byDay[d].debt   += s.debt;
-      byDay[d].count  += 1;
-    });
-
-    // Top products
-    const pm = {};
-    sales.forEach(s => { if(!pm[s.itemName]) pm[s.itemName]={ca:0,qty:0}; pm[s.itemName].ca+=s.total; pm[s.itemName].qty+=s.qty; });
-    const top5 = Object.entries(pm).sort((a,b)=>b[1].ca-a[1].ca).slice(0,5);
-
-    const rows = [
-      [shop + ' — Rapport Mensuel', monthStr],
+    // Feuille 1 : Résumé
+    const resume = [
+      [shop + ' — Rapport Mensuel', mois],
       [],
       ['RÉSUMÉ DU MOIS'],
-      ['CA Total',   sales.reduce((s,v)=>s+v.total,0) + ' ' + curr],
-      ['Profit Net', sales.reduce((s,v)=>s+v.profit,0) + ' ' + curr],
-      ['Dettes',     sales.reduce((s,v)=>s+v.debt,0) + ' ' + curr],
-      ['Nb Ventes',  sales.length],
-      ['Marge %',    sales.reduce((s,v)=>s+v.total,0) > 0
-        ? ((sales.reduce((s,v)=>s+v.profit,0)/sales.reduce((s,v)=>s+v.total,0))*100).toFixed(1)+'%'
-        : '0%'],
-      [],
-      ['PAR JOUR'],
-      ['Date','Nb Ventes','CA','Profit','Dettes'],
-      ...Object.entries(byDay).sort().map(([d,v]) => [d, v.count, v.ca+' '+curr, v.profit+' '+curr, v.debt+' '+curr]),
-      [],
-      ['TOP 5 PRODUITS'],
-      ['Produit','CA','Quantité Vendue'],
-      ...top5.map(([name,d]) => [name, d.ca+' '+curr, d.qty]),
-      [],
-      ['DÉTAIL COMPLET'],
-      [I18n.t('th_date'),I18n.t('th_time'),I18n.t('th_seller'),I18n.t('th_product'),I18n.t('th_qty'),I18n.t('th_price'),I18n.t('th_total'),I18n.t('debt_lbl'),I18n.t('th_client')],
+      ['CA Total', ca+' '+curr],
+      ['Profit Net', profit+' '+curr],
+      ['Dettes', dettes+' '+curr],
+      ['Nombre de ventes', sales.length],
+      ['Panier moyen', sales.length ? Math.round(ca/sales.length)+' '+curr : '0'],
+    ];
+
+    // Feuille 2 : Détail ventes
+    const detail = [
+      ['Date','Heure','Vendeur','Article','Qté','Prix Unit.','Total','Dette','Client'],
       ...sales.map(s => [
         new Date(s.date).toLocaleDateString('fr-FR'),
         new Date(s.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
-        s.userName, s.itemName, s.qty,
-        s.price+' '+curr, s.total+' '+curr, s.debt+' '+curr, s.clientName||''
+        s.userName||'', s.itemName||'', s.qty,
+        s.price+' '+curr, s.total+' '+curr,
+        s.debt+' '+curr, s.clientName||''
       ])
     ];
-    this._download(`Rapport_Mensuel_${months[now.getMonth()]}_${now.getFullYear()}.csv`, rows);
-  },
 
-  /* Rapport Annuel */
-  annual() {
-    const now   = new Date();
-    const sales = DB.activeSales().filter(s => new Date(s.date).getFullYear() === now.getFullYear());
-    const shop  = Settings.data.shopName || 'Smart Market Pro';
-    const curr  = Settings.getCurrency();
-    const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-
-    // Group by month
-    const byMonth = Array.from({length:12}, (_,i) => ({ month:monthNames[i], ca:0, profit:0, debt:0, count:0 }));
+    // Feuille 3 : Top produits
+    const byItem = {};
     sales.forEach(s => {
-      const m = new Date(s.date).getMonth();
-      byMonth[m].ca     += s.total;
-      byMonth[m].profit += s.profit;
-      byMonth[m].debt   += s.debt;
-      byMonth[m].count  += 1;
+      if (!byItem[s.itemName]) byItem[s.itemName]={name:s.itemName,qty:0,ca:0};
+      byItem[s.itemName].qty += s.qty;
+      byItem[s.itemName].ca  += s.total;
     });
-
-    // Top products annual
-    const pm = {};
-    sales.forEach(s => { if(!pm[s.itemName]) pm[s.itemName]={ca:0,qty:0}; pm[s.itemName].ca+=s.total; pm[s.itemName].qty+=s.qty; });
-    const top10 = Object.entries(pm).sort((a,b)=>b[1].ca-a[1].ca).slice(0,10);
-
-    // Top sellers annual
-    const sm = {};
-    sales.forEach(s => { if(!sm[s.userName]) sm[s.userName]={ca:0,count:0}; sm[s.userName].ca+=s.total; sm[s.userName].count++; });
-    const sellers = Object.entries(sm).sort((a,b)=>b[1].ca-a[1].ca);
-
-    const caTotal  = sales.reduce((s,v)=>s+v.total,0);
-    const pftTotal = sales.reduce((s,v)=>s+v.profit,0);
-
-    const rows = [
-      [shop + ' — Rapport Annuel ' + now.getFullYear()],
-      [],
-      ['BILAN ANNUEL'],
-      ['CA Total',      caTotal + ' ' + curr],
-      ['Profit Total',  pftTotal + ' ' + curr],
-      ['Dettes Total',  sales.reduce((s,v)=>s+v.debt,0) + ' ' + curr],
-      ['Nb Ventes',     sales.length],
-      ['Marge Globale', caTotal > 0 ? ((pftTotal/caTotal)*100).toFixed(1)+'%' : '0%'],
-      [],
-      ['PAR MOIS'],
-      ['Mois','Nb Ventes','CA','Profit','Dettes','Marge%'],
-      ...byMonth.map(m => [
-        m.month, m.count, m.ca+' '+curr, m.profit+' '+curr, m.debt+' '+curr,
-        m.ca > 0 ? ((m.profit/m.ca)*100).toFixed(1)+'%' : '0%'
-      ]),
-      [],
-      ['TOP 10 PRODUITS'],
-      ['Produit','CA Annuel','Quantité Vendue'],
-      ...top10.map(([name,d]) => [name, d.ca+' '+curr, d.qty]),
-      [],
-      ['PERFORMANCE VENDEURS'],
-      [I18n.t('th_seller'),I18n.t('th_total'),I18n.t('th_qty')],
-      ...sellers.map(([name,d]) => [name, d.ca+' '+curr, d.count])
+    const topItems = Object.values(byItem).sort((a,b)=>b.ca-a.ca);
+    const topSheet = [
+      ['Article','Quantité vendue','CA Généré'],
+      ...topItems.map(i=>[i.name, i.qty, i.ca+' '+curr])
     ];
-    this._download(`Rapport_Annuel_${now.getFullYear()}.csv`, rows);
+
+    this._download('Rapport_Mensuel_'+mois.replace(' ','_')+'.xlsx', [
+      {name:'Résumé', data:resume, colWidths:[25,15]},
+      {name:'Détail Ventes', data:detail, colWidths:[12,8,15,20,6,12,12,12,15]},
+      {name:'Top Produits', data:topSheet, colWidths:[25,18,15]}
+    ]);
   },
 
-  /* Rapport Stock */
-  stockReport() {
-    const shop = Settings.data.shopName || 'Smart Market Pro';
-    const curr = Settings.getCurrency();
-    const date = new Date().toLocaleDateString('fr-FR');
+  /* ── Export Stock ── */
+  stock() {
+    const items = [...DB.data.items].sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+    const curr  = Settings.getCurrency();
+    const date  = new Date().toLocaleDateString('fr-FR');
 
-    const rows = [
-      [shop + ' — Rapport Stock', date],
+    const data = [
+      [Settings.data.shopName+' — État du Stock', date],
       [],
-      ['RÉSUMÉ STOCK'],
-      ['Nb Produits',    DB.data.items.length],
-      ['Valeur Achat',   DB.data.items.reduce((s,i)=>s+i.buy*i.qty,0) + ' ' + curr],
-      ['Valeur Vente',   DB.data.items.reduce((s,i)=>s+i.sell*i.qty,0) + ' ' + curr],
-      ['Produits Alerte',DB.data.items.filter(i=>i.qty<=(i.min||5)).length],
-      ['Produits Épuisés',DB.data.items.filter(i=>i.qty===0).length],
-      [],
-      ['INVENTAIRE COMPLET'],
-      ['Code','Désignation','Prix Achat','Prix Vente','Marge%','Stock','Seuil','État'],
-      ...DB.data.items.map(i => {
-        const margin = i.buy > 0 ? (((i.sell-i.buy)/i.buy)*100).toFixed(1)+'%' : '—';
-        const state  = i.qty === 0 ? I18n.t('stock_out') : i.qty <= (i.min||5) ? I18n.t('stock_alert') : 'OK';
-        return [i.code||'—', i.name, i.buy+' '+curr, i.sell+' '+curr, margin, i.qty, i.min||5, state];
+      ['Article','Catégorie','Stock','Prix Achat','Prix Vente','Marge','Marge %','Alerte'],
+      ...items.map(i => {
+        const marge   = i.sell - i.buy;
+        const margePct= i.buy > 0 ? Math.round(marge/i.buy*100) : 0;
+        const alerte  = i.qty <= 0 ? 'RUPTURE' : i.qty <= (i.min||0) ? 'FAIBLE' : 'OK';
+        return [
+          i.name, i.category||'', i.qty,
+          i.buy+' '+curr, i.sell+' '+curr,
+          marge+' '+curr, margePct+'%', alerte
+        ];
       })
     ];
-    this._download('Rapport_Stock_' + date.split('/').join('-') + '.csv', rows);
+
+    this._download('Export_Stock_'+date.split('/').join('-')+'.xlsx', [
+      {name:'Stock', data, colWidths:[25,15,8,12,12,12,10,10]}
+    ]);
   },
 
-  historyReport() {
-    const sales = History._filtered && History._filtered.length
-      ? History._filtered
-      : DB.activeSales();
-    const curr  = Settings.getCurrency();
-    const shop  = Settings.data.shopName || 'Smart Market Pro';
-    const date  = new Date().toLocaleDateString('fr-FR');
-    const ca    = sales.reduce((t, s) => t + s.total,  0);
-    const pf    = sales.reduce((t, s) => t + s.profit, 0);
-    const db    = sales.reduce((t, s) => t + s.debt,   0);
-    const esc   = v => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    const lines = [
-      shop + ' - Historique des Ventes,' + date, '',
-      'Total ventes,' + sales.length,
-      'CA,' + ca + ' ' + curr,
-      'Profit,' + pf + ' ' + curr,
-      'Dettes,' + db + ' ' + curr, '',
-      'Date,Produit,Qte,Prix Unit,Total,Profit,Client,Vendeur,Dette',
-      ...sales.map(s => [
+  /* ── Export Dettes ── */
+  debts() {
+    const curr     = Settings.getCurrency();
+    const date     = new Date().toLocaleDateString('fr-FR');
+    const debtSales= DB.activeSales().filter(s=>s.debt>0);
+    const total    = debtSales.reduce((t,s)=>t+s.debt,0);
+
+    const data = [
+      [Settings.data.shopName+' — Rapport Dettes', date],
+      [],
+      ['Total Impayés', total+' '+curr],
+      ['Nombre de créances', debtSales.length],
+      [],
+      ['Date','Client','Article','Total Vente','Montant Impayé'],
+      ...debtSales.map(s=>[
         new Date(s.date).toLocaleDateString('fr-FR'),
-        s.itemName || '', s.qty, s.price || 0,
-        s.total, s.profit,
-        s.clientName || '', s.userName || '',
-        s.debt || 0
-      ].map(esc).join(','))
-    ];
-    const csv = '\uFEFF' + lines.join('\r\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    a.download = 'Historique_' + date.split('/').join('-') + '.csv';
-    a.click(); URL.revokeObjectURL(a.href);
-    UI.toast(I18n.t('toast_export_history'),'success');
-  },
-
-  expensesReport() {
-    const exp  = DB.data.expenses || [];
-    const curr = Settings.getCurrency();
-    const shop = Settings.data.shopName || 'Smart Market Pro';
-    const date = new Date().toLocaleDateString('fr-FR');
-    const total= exp.reduce((t,e) => t+e.amount, 0);
-    const bycat= {};
-    exp.forEach(e => { if(!bycat[e.cat]) bycat[e.cat]=0; bycat[e.cat]+=e.amount; });
-    const esc  = v => { const s=String(v==null?'':v); return s.includes(',')||s.includes('"') ? '"'+s.replace(/"/g,'""')+'"' : s; };
-    const lines = [
-      shop + ' - Rapport Depenses,' + date, '',
-      'Total,' + total + ' ' + curr,
-      'Nb operations,' + exp.length, '',
-      'PAR CATEGORIE', 'Categorie,Montant',
-      ...Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([k,v]) => esc(k)+','+esc(v+' '+curr)),
-      '', 'DETAIL', 'Date,Description,Categorie,Montant,Notes,Par',
-      ...exp.slice().reverse().map(e =>
-        [new Date(e.date).toLocaleDateString('fr-FR'), e.desc, e.cat, e.amount+' '+curr, e.notes||'', e.addedBy||''].map(esc).join(',')
-      )
-    ];
-    const csv = '\uFEFF' + lines.join('\r\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
-    a.download = 'Depenses_' + date.split('/').join('-') + '.csv';
-    a.click(); URL.revokeObjectURL(a.href);
-    UI.toast(I18n.t('toast_export_expenses'),'success');
-  },
-
-  /* Rapport Dettes */
-  debtsReport() {
-    const shop = Settings.data.shopName || 'Smart Market Pro';
-    const curr = Settings.getCurrency();
-    const date = new Date().toLocaleDateString('fr-FR');
-
-    const debtSales = DB.activeSales().filter(s => s.debt > 0);
-    const clientMap = {};
-    debtSales.forEach(s => {
-      const cl = s.clientName || 'Client #' + s.id.slice(-4);
-      if (!clientMap[cl]) clientMap[cl] = { total:0, count:0, lastDate:'' };
-      clientMap[cl].total += s.debt;
-      clientMap[cl].count += 1;
-      if (!clientMap[cl].lastDate || s.date > clientMap[cl].lastDate) clientMap[cl].lastDate = s.date;
-    });
-    const clients = Object.entries(clientMap).sort((a,b)=>b[1].total-a[1].total);
-
-    const rows = [
-      [shop + ' — Rapport Dettes', date],
-      [],
-      ['RÉSUMÉ'],
-      ['Clients Débiteurs', clients.length],
-      ['Total Dettes',      debtSales.reduce((s,v)=>s+v.debt,0) + ' ' + curr],
-      [],
-      ['PAR CLIENT'],
-      ['Client','Dette Totale','Nb Transactions','Dernier Achat'],
-      ...clients.map(([name,d]) => [
-        name, d.total+' '+curr, d.count,
-        new Date(d.lastDate).toLocaleDateString('fr-FR')
-      ]),
-      [],
-      ['DÉTAIL DES IMPAYÉS'],
-      ['Date','Client','Produit','Total Vente','Montant Impayé'],
-      ...debtSales.map(s => [
-        new Date(s.date).toLocaleDateString('fr-FR'),
-        s.clientName || '—', s.itemName,
+        s.clientName||'—', s.itemName,
         s.total+' '+curr, s.debt+' '+curr
       ])
     ];
-    this._download('Rapport_Dettes_' + date.split('/').join('-') + '.csv', rows);
+
+    this._download('Rapport_Dettes_'+date.split('/').join('-')+'.xlsx', [
+      {name:'Dettes', data, colWidths:[12,18,20,14,14]}
+    ]);
+  },
+
+  /* ── Alias pour compatibilité boutons existants ── */
+  stockReport()    { this.stock(); },
+  debtsReport()    { this.debts(); },
+
+  /* ── Export Dépenses ── */
+  expensesReport() {
+    const curr  = Settings.getCurrency();
+    const date  = new Date().toLocaleDateString('fr-FR');
+    const exps  = [...(DB.data.expenses||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const total = exps.reduce((t,e)=>t+e.amount,0);
+    const data  = [
+      [Settings.data.shopName+' — Rapport Dépenses', date],
+      [],
+      ['Total Dépenses', total+' '+curr],
+      ['Nombre d\'entrées', exps.length],
+      [],
+      ['Date','Description','Catégorie','Montant'],
+      ...exps.map(e=>[
+        new Date((e.date||'')+'T00:00:00').toLocaleDateString('fr-FR'),
+        e.desc||'', e.category||'', e.amount+' '+curr
+      ])
+    ];
+    this._download('Rapport_Depenses_'+date.split('/').join('-')+'.xlsx',[
+      {name:'Dépenses', data, colWidths:[12,25,18,12]}
+    ]);
+  },
+
+  /* ── Export Historique complet ── */
+  historyReport() {
+    const curr  = Settings.getCurrency();
+    const date  = new Date().toLocaleDateString('fr-FR');
+    const sales = [...DB.activeSales()].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const ca    = sales.reduce((t,s)=>t+s.total,0);
+    const data  = [
+      [Settings.data.shopName+' — Historique Complet', date],
+      [],
+      ['CA Total', ca+' '+curr],
+      ['Nombre de ventes', sales.length],
+      [],
+      ['Date','Heure','Vendeur','Article','Qté','Prix Unit.','Total','Payé','Dette','Client'],
+      ...sales.map(s=>[
+        new Date(s.date).toLocaleDateString('fr-FR'),
+        new Date(s.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+        s.userName||'', s.itemName||'', s.qty,
+        s.price+' '+curr, s.total+' '+curr,
+        (s.paid||0)+' '+curr, s.debt+' '+curr, s.clientName||''
+      ])
+    ];
+    this._download('Historique_'+date.split('/').join('-')+'.xlsx',[
+      {name:'Historique', data, colWidths:[12,8,15,20,6,12,12,12,12,15]}
+    ]);
+  },
+
+  /* ── Export Annuel ── */
+  annual() {
+    const curr  = Settings.getCurrency();
+    const year  = new Date().getFullYear();
+    const sales = DB.activeSales().filter(s=>new Date(s.date).getFullYear()===year);
+    const ca    = sales.reduce((t,s)=>t+s.total,0);
+    const byMonth = {};
+    for (let m=0;m<12;m++) byMonth[m]={mois:new Date(year,m).toLocaleDateString('fr-FR',{month:'long'}),ca:0,ventes:0};
+    sales.forEach(s=>{const m=new Date(s.date).getMonth();byMonth[m].ca+=s.total;byMonth[m].ventes++;});
+    const resume = [
+      [Settings.data.shopName+' — Rapport Annuel '+year],
+      [],
+      ['CA Total Annuel', ca+' '+curr],
+      ['Total Ventes', sales.length],
+      [],
+      ['Mois','Ventes','CA'],
+      ...Object.values(byMonth).map(m=>[m.mois, m.ventes, m.ca+' '+curr])
+    ];
+    const detail = [
+      ['Date','Vendeur','Article','Qté','Total','Client'],
+      ...sales.map(s=>[
+        new Date(s.date).toLocaleDateString('fr-FR'),
+        s.userName||'', s.itemName||'', s.qty,
+        s.total+' '+curr, s.clientName||''
+      ])
+    ];
+    this._download('Rapport_Annuel_'+year+'.xlsx',[
+      {name:'Résumé '+year, data:resume, colWidths:[18,10,15]},
+      {name:'Détail '+year, data:detail, colWidths:[12,15,20,6,12,15]}
+    ]);
   }
 };
 
-/* ═══════════════ DATA MANAGER ═══════════════ */
 const DataManager = {
   downloadBackup() {
     const payload={exported:new Date().toISOString(),version:'7.7',exportedBy:Auth.currentUser?.name||'?',data:DB.data};
@@ -7112,9 +7117,15 @@ const DeferredSales = {
         sel.appendChild(o);
       });
     }
-    // Date par défaut = aujourd'hui
+    // Date par défaut = aujourd'hui (heure locale, pas UTC)
     const dateEl = document.getElementById('def-date');
-    if (dateEl) dateEl.value = new Date().toISOString().slice(0,10);
+    if (dateEl) {
+      const now = new Date();
+      const localDate = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      dateEl.value = localDate;
+      // Bloquer les dates futures
+      dateEl.max = localDate;
+    }
 
     this._lines = [];
     this._lineId = 0;
@@ -7134,7 +7145,8 @@ const DeferredSales = {
     const dateVal = document.getElementById('def-date')?.value;
     const infoEl  = document.getElementById('def-date-info');
     if (!dateVal || !infoEl) return;
-    const d = new Date(dateVal);
+    // Ajouter T00:00:00 pour forcer l'interprétation en heure locale (évite le bug UTC)
+    const d = new Date(dateVal + 'T00:00:00');
     const today = new Date();
     today.setHours(0,0,0,0);
     const diff = Math.floor((today - d) / 86400000);
@@ -7147,7 +7159,7 @@ const DeferredSales = {
     } else if (diff > 1) {
       infoEl.textContent = `Il y a ${diff} jours (${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}) — visible dans l'onglet Historique.`;
       infoEl.style.color = 'var(--text3)';
-    } else if (diff < 0) {
+    } else {
       infoEl.textContent = '⚠️ Date future non autorisée.';
       infoEl.style.color = 'var(--danger)';
     }
@@ -7157,10 +7169,12 @@ const DeferredSales = {
     const id = ++this._lineId;
     this._lines.push({ id, itemId:'', qty:1, price:0, paid:'', client:'' });
     this._renderLines();
-    // Focus sur le select du nouvel item
+    // Scroll vers la nouvelle ligne + focus sur le select
     setTimeout(() => {
+      const newRow = document.getElementById('def-row-' + id);
+      if (newRow) newRow.scrollIntoView({ behavior:'smooth', block:'center' });
       document.getElementById('def-item-' + id)?.focus();
-    }, 50);
+    }, 80);
   },
 
   removeLine(id) {
@@ -7220,7 +7234,7 @@ const DeferredSales = {
     se('def-total-display', Utils.currency(total));
     se('def-lines-info', valid + ' ligne' + (valid>1?'s':'') + ' valide' + (valid>1?'s':''));
     const sumEl = document.getElementById('def-summary');
-    if (sumEl) sumEl.style.display = this._lines.length > 0 ? '' : 'none';
+    if (sumEl) sumEl.style.opacity = this._lines.length > 0 ? '1' : '0.4';
     const btn = document.getElementById('def-submit-btn');
     if (btn) btn.disabled = valid === 0;
   },
@@ -7233,8 +7247,10 @@ const DeferredSales = {
       return;
     }
     const items = DB.data.items;
-    const itemOpts = items.length
-      ? items.map(i => `<option value="${Utils.esc(i.id)}">${Utils.esc(i.name)} (dispo: ${i.qty})</option>`).join('')
+    // Trier A→Z
+    const sortedItems = [...items].sort((a,b) => a.name.localeCompare(b.name,'fr',{sensitivity:'base'}));
+    const itemOpts = sortedItems.length
+      ? `<option value="">— Choisir —</option>` + sortedItems.map(i => `<option value="${Utils.esc(i.id)}">${Utils.esc(i.name)} (dispo: ${i.qty})</option>`).join('')
       : `<option value="">— ${I18n.t('no_stock')} —</option>`;
 
     container.innerHTML = this._lines.map((line, idx) => `
