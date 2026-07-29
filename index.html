@@ -17,10 +17,6 @@
   function loadScript(src, onload, onerror){ var s=document.createElement('script'); s.src=src; s.async=true; s.onload=onload||null; s.onerror=onerror||null; document.head.appendChild(s); }
   loadScript('https://cdn.jsdelivr.net/npm/chart.js', null, function(){ window.Chart=null; console.warn('[SMP] Chart.js non disponible - mode hors ligne'); });
   loadScript('https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js', function(){ console.log('[SMP] SheetJS chargé'); }, function(){ console.warn('[SMP] SheetJS non disponible - export CSV fallback'); });
-  loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-    function(){ (console.log||function(){})('[SMP] Supabase SDK chargé'); },
-    function(){ window.supabase=null; console.warn('[SMP] Supabase non disponible - mode hors ligne'); }
-  );
 
   // ── Service Worker — fichier séparé sw.js (compatible tous navigateurs) ──
   if ('serviceWorker' in navigator) {
@@ -87,9 +83,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 .pin-btn:hover{background:var(--border);border-color:var(--accent);color:var(--accent);}
 .pin-btn:active{transform:scale(.92);background:rgba(0,232,122,.12);}
 .auth-error{font-size:.78rem;color:var(--danger);min-height:18px;margin-top:6px;font-weight:600;}
-.sync-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--fm);font-size:.6rem;color:var(--text3);background:var(--sur2);border:1px solid var(--border);border-radius:4px;padding:3px 8px;margin-top:8px;}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--danger);}
-.sync-dot.online{background:var(--accent);}
+
 
 /* TOP NAV */
 #top-nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;height:var(--nav-h);gap:2px;position:sticky;top:0;z-index:900;overflow:visible;}
@@ -1497,43 +1491,6 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       <button class="btn btn-ghost btn-full" onclick="ExcelExport.debtsReport()">💳 Rapport Dettes</button>
     </div>
   </div>
-  <!-- Server Configuration Card -->
-  <div class="card mt-14">
-    <div class="card-title">🌐 Configuration Serveur</div>
-    <div style="font-size:.8rem;color:var(--text2);margin-bottom:12px;line-height:1.6">
-      Connectez votre propre serveur (local ou en ligne). Supporte <strong>Supabase</strong>, <strong>Firebase</strong>, ou tout <strong>serveur REST personnalisé</strong>.
-    </div>
-    <div id="server-current-config" style="font-family:var(--fm);font-size:.72rem;color:var(--text3);margin-bottom:10px">Aucun serveur configuré</div>
-    <div class="form-grid" id="server-config-fields" style="display:none">
-      <div class="form-group">
-        <label class="form-label">Type de Serveur</label>
-        <select id="server-type" onchange="ServerConfig.onTypeChange()">
-          <option value="">— Choisir —</option>
-          <option value="supabase">Supabase (recommandé)</option>
-          <option value="firebase">Firebase</option>
-          <option value="custom">Serveur REST personnalisé</option>
-          <option value="local">Serveur local (WiFi)</option>
-        </select>
-      </div>
-      <div class="form-group" id="field-url">
-        <label class="form-label">URL du Serveur</label>
-        <input type="url" id="server-url" placeholder="https://xxx.supabase.co">
-      </div>
-      <div class="form-group" id="field-key">
-        <label class="form-label">Clé API / Token</label>
-        <input type="password" id="server-key" placeholder="Votre clé secrète">
-      </div>
-      <div class="form-group" id="field-local-ip" style="display:none">
-        <label class="form-label">IP du serveur local</label>
-        <input type="text" id="server-local-ip" placeholder="192.168.1.100:3000">
-      </div>
-    </div>
-    <div id="server-test-result" style="font-family:var(--fm);font-size:.75rem;min-height:20px;margin:8px 0"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-info btn-sm" onclick="ServerConfig.test()">🔌 Tester</button>
-      <button class="btn btn-primary btn-sm" onclick="ServerConfig.save()" id="btn-server-save" style="display:none">💾 Enregistrer</button>
-    </div>
-  </div>
 
   <!-- Storage Preferences -->
   <div class="card mt-14">
@@ -2477,7 +2434,7 @@ const I18n = {
       create_account_btn:'CRÉER LE COMPTE',
       user_accounts:'Comptes Utilisateurs',
       local_backup:'💾 Backup Local', restore:'📥 Restaurer',
-      cloud_sync:'☁️ Cloud Sync', danger_zone:'🚨 Zone Danger',
+      danger_zone:'🚨 Zone Danger',
       danger_zone_desc:'Ces actions sont irréversibles.',
       btn_soft_reset:'Effacer données commerciales',
       reset:'Réinitialiser', sys_info:'Informations Système',
@@ -2607,8 +2564,6 @@ const I18n = {
       lbl_new_pin_opt:'Nouveau PIN (laisser vide = inchangé)',
       lbl_sale_date:'Date des ventes',
       lbl_client_opt:'Nom du client (optionnel)',
-      lbl_supabase_url:'URL du projet Supabase',
-      lbl_supabase_key:'Clé API (anon/public)',
       lbl_shop_id:'Identifiant boutique (shop_id)',
       lbl_tva:'TVA (%)',
       lbl_details:'Détails...',
@@ -2621,7 +2576,6 @@ const I18n = {
       card_add_stock:'Ajouter / Réapprovisionner',
       card_today_sales:"Transactions du Jour",
       card_full_inventory:'Inventaire Complet',
-      card_cloud_config:'Configuration Cloud Supabase',
       card_shop_config:'Configuration Boutique',
       card_debt_payment:'Enregistrer un Paiement',
       card_cash_count:'Comptage de Caisse',
@@ -2691,16 +2645,6 @@ const I18n = {
       toast_identity_saved:'Identité sauvegardée',
       toast_backup_ok:'Backup téléchargé',
       toast_backup_imported:'Backup importé',
-      toast_cloud_activated:'Cloud Supabase activé !',
-      toast_cloud_push_ok:'Données envoyées vers le cloud',
-      toast_cloud_pull_ok:'Données mises à jour depuis le cloud',
-      toast_cloud_synced:'✅ Données synchronisées depuis le cloud',
-      toast_cloud_empty:'Cloud vide — données locales conservées',
-      toast_cloud_disabled:'Synchronisation cloud désactivée',
-      toast_cloud_not_configured:'Cloud non configuré',
-      toast_cloud_error:'Erreur ou cloud vide',
-      toast_pushing:'Envoi des données locales vers le cloud...',
-      toast_pulling:'Téléchargement depuis le cloud...',
       toast_sending:'Envoi en cours...',
       toast_downloading:'Téléchargement en cours...',
       toast_pin_updated:'✅ PIN modifié avec succès !',
@@ -2791,10 +2735,6 @@ const I18n = {
       toast_err_last_admin:'Dernier admin — impossible',
       toast_err_delete_self:'Impossible de supprimer votre propre compte',
       toast_err_api_key_required:'Clé API requise',
-      toast_err_url_required:'URL requise',
-      toast_err_url_key_required:'URL et clé requises',
-      toast_err_server_type:'Choisissez un type de serveur',
-      toast_err_ip_required:'IP locale requise',
       toast_err_file_invalid:'Fichier invalide',
       toast_err_no_data:'Aucune donnée à importer ou mappage incomplet',
       toast_err_no_lines:'Aucune ligne valide',
@@ -2868,7 +2808,7 @@ const I18n = {
       create_account_btn:'CREATE ACCOUNT',
       user_accounts:'User Accounts',
       local_backup:'💾 Local Backup', restore:'📥 Restore',
-      cloud_sync:'☁️ Cloud Sync', danger_zone:'🚨 Danger Zone',
+      danger_zone:'🚨 Danger Zone',
       danger_zone_desc:'These actions are irreversible.',
       btn_soft_reset:'Clear commercial data',
       reset:'Reset', sys_info:'System Information',
@@ -2998,8 +2938,6 @@ const I18n = {
       lbl_new_pin_opt:'New PIN (leave blank = unchanged)',
       lbl_sale_date:'Sale date',
       lbl_client_opt:'Client name (optional)',
-      lbl_supabase_url:'Supabase project URL',
-      lbl_supabase_key:'API key (anon/public)',
       lbl_shop_id:'Store identifier (shop_id)',
       lbl_tva:'VAT (%)',
       lbl_details:'Details...',
@@ -3012,7 +2950,6 @@ const I18n = {
       card_add_stock:'Add / Restock',
       card_today_sales:"Today's Transactions",
       card_full_inventory:'Full Inventory',
-      card_cloud_config:'Supabase Cloud Configuration',
       card_shop_config:'Store Configuration',
       card_debt_payment:'Record a Payment',
       card_cash_count:'Cash Count',
@@ -3082,16 +3019,6 @@ const I18n = {
       toast_identity_saved:'Identity saved',
       toast_backup_ok:'Backup downloaded',
       toast_backup_imported:'Backup imported',
-      toast_cloud_activated:'Supabase Cloud activated!',
-      toast_cloud_push_ok:'Data sent to cloud',
-      toast_cloud_pull_ok:'Data updated from cloud',
-      toast_cloud_synced:'✅ Data synced from cloud',
-      toast_cloud_empty:'Cloud empty — local data kept',
-      toast_cloud_disabled:'Cloud sync disabled',
-      toast_cloud_not_configured:'Cloud not configured',
-      toast_cloud_error:'Error or empty cloud',
-      toast_pushing:'Sending local data to cloud...',
-      toast_pulling:'Downloading from cloud...',
       toast_sending:'Sending...',
       toast_downloading:'Downloading...',
       toast_pin_updated:'✅ PIN changed successfully!',
@@ -3182,10 +3109,6 @@ const I18n = {
       toast_err_last_admin:'Last admin — cannot delete',
       toast_err_delete_self:'Cannot delete your own account',
       toast_err_api_key_required:'API key required',
-      toast_err_url_required:'URL required',
-      toast_err_url_key_required:'URL and key required',
-      toast_err_server_type:'Choose a server type',
-      toast_err_ip_required:'Local IP required',
       toast_err_file_invalid:'Invalid file',
       toast_err_no_data:'No data to import or incomplete mapping',
       toast_err_no_lines:'No valid lines',
@@ -3414,7 +3337,6 @@ const UI = {
     if (id === 'expenses')    { if(typeof Expenses!=='undefined')    Expenses.render(); }
     if (id === 'cashreport')  { const _f=document.getElementById('cr-fond'); if(_f&&!_f.value) _f.value=DB.data.cashInit||0; }
     if (id === 'commissions') { if(typeof Commissions!=='undefined') Commissions.render(); }
-    if (id === 'config')    { ServerConfig.updateDisplay(); }
     if (id === 'dashboard') Dashboard.refresh();
     if (id === 'sales')     Sales.renderSales && Sales.renderSales();
     if (id === 'stock')     Stock.render && Stock.render();
@@ -4582,8 +4504,8 @@ const DataManager = {
     if (!Auth.isAdmin()) return UI.toast(I18n.t('toast_err_admin_required'),'danger');
     if (!await SmpModal.confirm(
       I18n._lang === 'en'
-        ? 'Delete all sales, stock, debts and expenses? Settings, accounts and Supabase configuration will be kept.'
-        : 'Supprimer toutes les ventes, le stock, les dettes et les dépenses ? Les paramètres, comptes et configuration Supabase seront conservés.',
+        ? 'Delete all sales, stock, debts and expenses? Settings and accounts will be kept.'
+        : 'Supprimer toutes les ventes, le stock, les dettes et les dépenses ? Les paramètres et comptes seront conservés.',
       { title: I18n._lang === 'en' ? '🧹 Reset commercial data' : '🧹 Réinitialiser les données commerciales',
         icon: '🧹', okLabel: I18n._lang === 'en' ? 'Delete data' : 'Supprimer les données', okClass: 'btn-warning' }
     )) return;
@@ -4627,7 +4549,7 @@ const SysInfo = {
         w.id = 'storage-warning';
         w.className = 'alert-item alert-danger';
         w.style.marginBottom = '12px';
-        w.innerHTML = '🔴 <strong>Stockage local presque plein</strong> — '+((sz/1024/1024).toFixed(1))+'MB / 5MB. Faites un backup JSON et activez Supabase.';
+        w.innerHTML = '🔴 <strong>Stockage local presque plein</strong> — '+((sz/1024/1024).toFixed(1))+'MB / 5MB. Faites un backup JSON régulièrement.';
         document.getElementById('sys-info')?.before(w);
       }
     }
@@ -5809,12 +5731,6 @@ const Share = {
   }
 };
 
-
-
-/* ═══════════════════════════════════════════════════════
-   MODULE: SERVER CONFIG — Configuration serveur utilisateur
-   Supporte: Supabase, Firebase, REST custom, Local WiFi
-   ═══════════════════════════════════════════════════════ */
 /* ═══════════════ RESTOCK REPORT ═══════════════ */
 const RestockReport = {
 
@@ -5961,138 +5877,6 @@ const RestockReport = {
 };
 
 /* ═══════════════ CLOUD CONFIG ═══════════════ */
-const ServerConfig = {
-  CFG_KEY: 'SMP_SERVER_CFG_V76',
-
-  load() {
-    try {
-      const legacyKeys = ['SMP_SERVER_CFG_V73', 'SMP_SERVER_CFG_V72'];
-      for (const lk of legacyKeys) {
-        const lr = localStorage.getItem(lk);
-        if (lr && !localStorage.getItem(this.CFG_KEY)) {
-          localStorage.setItem(this.CFG_KEY, lr);
-          break;
-        }
-      }
-      return JSON.parse(localStorage.getItem(this.CFG_KEY) || 'null');
-    } catch(_) { return null; }
-  },
-
-  save() {
-    const type = document.getElementById('server-type')?.value;
-    const url  = document.getElementById('server-url')?.value.trim();
-    const key  = document.getElementById('server-key')?.value.trim();
-    const db   = document.getElementById('server-db')?.value.trim() || 'smp_data';
-    const localIp = document.getElementById('server-local-ip')?.value.trim();
-
-    if (!type) return UI.toast(I18n.t('toast_err_server_type'),'danger');
-    if (!url && type !== 'local') return UI.toast(I18n.t('toast_err_url_required'),'danger');
-    if (type === 'local' && !localIp) return UI.toast(I18n.t('toast_err_ip_required'),'danger');
-
-    const cfg = { type, url: type==='local'?`http://${localIp}`:url, key, db, savedAt:new Date().toISOString() };
-    localStorage.setItem(this.CFG_KEY, JSON.stringify(cfg));
-
-    this.updateDisplay();
-    UI.toast(I18n.t('toast_server_saved'),'success');
-    document.getElementById('btn-server-save').style.display = 'none';
-    this.toggleFields(false);
-  },
-
-  async test() {
-    const type = document.getElementById('server-type')?.value;
-    const url  = document.getElementById('server-url')?.value.trim();
-    const key  = document.getElementById('server-key')?.value.trim();
-    const result = document.getElementById('server-test-result');
-    const btn  = document.getElementById('btn-server-test');
-
-    if (!url) { if(result) result.innerHTML='<span style="color:var(--danger)">URL requise</span>'; return; }
-    if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Test...'; }
-    if (result) result.innerHTML='<span style="color:var(--text3)">Test de connexion...</span>';
-
-    try {
-      let ok = false;
-      if (type === 'supabase') {
-        const res = await fetch(`${url}/rest/v1/`, { headers:{ 'apikey': key||'', 'Authorization': `Bearer ${key||''}` } });
-        ok = res.status < 500;
-      } else {
-        const res = await fetch(url, { method:'GET', signal: AbortSignal.timeout(5000) }).catch(()=>null);
-        ok = !!res && res.status < 500;
-      }
-      if (result) result.innerHTML = ok
-        ? '<span style="color:var(--accent)">✅ Connexion réussie !</span>'
-        : '<span style="color:var(--danger)">❌ Connexion échouée — vérifiez l\'URL</span>';
-      if (ok) document.getElementById('btn-server-save').style.display = '';
-    } catch(e) {
-      if (result) result.innerHTML = '<span style="color:var(--danger)">❌ Serveur inaccessible</span>';
-    } finally {
-      if (btn) { btn.disabled=false; btn.innerHTML='🔌 Tester la connexion'; }
-    }
-  },
-
-  show() {
-    this.toggleFields(true);
-    const cfg = this.load();
-    if (cfg) {
-      const sel = document.getElementById('server-type');
-      const urlI = document.getElementById('server-url');
-      const dbI  = document.getElementById('server-db');
-      if (sel) sel.value  = cfg.type || '';
-      if (urlI) urlI.value = cfg.url || '';
-      if (dbI)  dbI.value  = cfg.db  || 'smp_data';
-      this.onTypeChange();
-    }
-  },
-
-  toggleFields(force) {
-    const fields = document.getElementById('server-config-fields');
-    if (!fields) return;
-    const show = force !== undefined ? force : fields.style.display === 'none';
-    fields.style.display = show ? '' : 'none';
-  },
-
-  onTypeChange() {
-    const type = document.getElementById('server-type')?.value;
-    const localField = document.getElementById('field-local-ip');
-    const keyField   = document.getElementById('field-key');
-    if (localField) localField.style.display = type === 'local' ? '' : 'none';
-    if (keyField)   keyField.style.display   = type === 'local' ? 'none' : '';
-
-    const urlPh = document.getElementById('server-url');
-    if (urlPh) {
-      const placeholders = {
-        supabase: 'https://xxxxx.supabase.co',
-        firebase: 'https://xxxxx.firebaseio.com',
-        custom:   'https://mon-serveur.com/api',
-        local:    'Utilisez le champ IP ci-dessous'
-      };
-      urlPh.placeholder = placeholders[type] || 'https://...';
-    }
-  },
-
-  updateDisplay() {
-    const cfg = this.load();
-    const el  = document.getElementById('server-current-config');
-    const statusEl = document.getElementById('cloud-status-text');
-    const infoEl   = document.getElementById('cloud-info');
-    if (!cfg) {
-      if (el) el.textContent = 'Aucun serveur configuré — données stockées localement';
-      if (statusEl) statusEl.textContent = 'Mode local uniquement';
-      if (infoEl) infoEl.innerHTML = '<span style="color:var(--text3)">❌ Non configuré</span>';
-      return;
-    }
-    if (el) el.innerHTML = `Type: <strong>${cfg.type}</strong> | URL: <strong>${cfg.url?.substring(0,40)}...</strong> | Configuré le: ${new Date(cfg.savedAt).toLocaleDateString('fr-FR')}`;
-    if (statusEl) statusEl.textContent = `Serveur ${cfg.type} configuré`;
-    if (infoEl) infoEl.innerHTML = `<span style="color:var(--accent)">✅ ${cfg.type} — ${cfg.url?.substring(0,30)}...</span>`;
-  },
-
-  initOnLoad() {
-    this.updateDisplay();
-  }
-};
-
-/* ═══════════════════════════════════════════════════════
-   MODULE: STORAGE CONFIG — Choix emplacement stockage local
-   ═══════════════════════════════════════════════════════ */
 const StorageConfig = {
   // Note: Le navigateur sandboxe le système de fichiers.
   // L'utilisateur choisit l'emplacement à chaque export.
@@ -8434,7 +8218,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (typeof PWA !== 'undefined') PWA.init();
   if (typeof AutoBackup !== 'undefined') AutoBackup.start();
   if (typeof EODSummary !== 'undefined') EODSummary.schedule();
-  if (typeof ServerConfig !== 'undefined') ServerConfig.initOnLoad();
   if (typeof StorageConfig !== 'undefined') StorageConfig.initPreview();
   if (typeof AIConfig !== 'undefined') AIConfig.updateStatus();
   if (typeof RecoveryManager !== 'undefined') RecoveryManager.generateMasterCode();
