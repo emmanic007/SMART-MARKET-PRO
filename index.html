@@ -1165,7 +1165,6 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       <div class="nav-drop-item" id="drop-loyalty" onclick="NavDesktop.go('loyalty')" id="drop-loyalty"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Fidélité</div>
       <div class="nav-drop-item" id="drop-returns" onclick="NavDesktop.go('returns')" id="drop-returns"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></span> Retours</div>
       <div class="nav-drop-item" id="drop-objectives" onclick="NavDesktop.go('objectives')" id="drop-objectives"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span> Objectifs</div>
-      <div class="nav-drop-item" id="drop-multishop" onclick="NavDesktop.go('multishop')" id="drop-multishop"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Boutiques</div>
       <div class="nav-drop-item" id="drop-categories" onclick="NavDesktop.go('categories')" id="drop-categories"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> Catégories</div>
       <div class="nav-drop-sep"></div>
       <div class="nav-drop-item" onclick="NavDesktop.go('ai')"><span class="drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg></span> IA</div>
@@ -1192,7 +1191,6 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 <span id="tab-settings"    style="display:none"></span>
 <span id="tab-ai"          style="display:none"></span>
 <span id="tab-suppliers"   style="display:none"></span>
-<span id="tab-multishop"   style="display:none"></span>
 <span id="tab-categories"  style="display:none"></span>
 <span id="tab-returns"     style="display:none"></span>
 <span id="tab-loyalty"     style="display:none"></span>
@@ -1387,7 +1385,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
   </div>
   <div id="system-alerts" class="alert-list"></div>
   <div class="stats-grid">
-    <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label">Chiffre d'Affaires</div><div class="stat-value" id="st-ca">0</div><div class="stat-sub" id="st-ca-sub"></div></div>
+    <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label">Chiffre d'Affaires</div><div class="stat-value" id="st-ca">0</div><div class="stat-sub" id="st-ca-sub"></div><div class="stat-sub" id="st-returns-info" style="display:none;color:var(--danger)"></div></div>
     <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Profit Net</div><div class="stat-value" id="st-pft">0</div><div class="stat-sub" id="st-margin-sub"></div></div>
     <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label">Dettes Clients</div><div class="stat-value" id="st-debt">0</div><div class="stat-sub" id="st-debt-sub"></div></div>
     <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label">Liquidités</div><div class="stat-value" id="st-cash">0</div><div class="stat-sub">Caisse + CA - Dettes</div></div>
@@ -1438,6 +1436,9 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 <!-- ÉQUIPE -->
 <section id="users" class="page">
   <div class="page-header"><h1 class="page-title" data-i18n="team_title">Gestion <span>Équipe</span></h1></div>
+  <div style="background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.25);border-radius:var(--rlg);padding:12px 16px;margin-bottom:16px;font-family:var(--fm);font-size:.78rem;color:var(--text2);line-height:1.6" data-i18n="team_info">
+    💡 Créez un compte PIN pour chaque personne qui utilise cet appareil. Chaque personne se connecte avec son propre code PIN et ses ventes sont suivies séparément.
+  </div>
 
   <div class="card">
     <div class="card-title">Créer un Compte</div>
@@ -1771,23 +1772,6 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
         <tbody></tbody>
       </table>
     </div>
-  </div>
-</section>
-
-<!-- MULTI-BOUTIQUES -->
-<section id="multishop" class="page">
-  <div class="page-header"><h1 class="page-title"><span data-i18n="nav_multishop">Multi-Boutiques</span></h1></div>
-  <div class="card">
-    <div class="card-title">Ajouter une Boutique</div>
-    <div class="form-grid">
-      <div class="form-group"><label class="form-label">Nom de la Boutique *</label><input type="text" id="shop-name" placeholder="Ex: Magasin Centre-Ville"></div>
-      <div class="form-group"><label class="form-label">Adresse</label><input type="text" id="shop-addr" placeholder="Quartier, rue..."></div>
-    </div>
-    <button class="btn btn-primary mt-14" onclick="MultiShop.add()">+ AJOUTER LA BOUTIQUE</button>
-  </div>
-  <div class="card">
-    <div class="card-title">Vos Boutiques</div>
-    <div id="shops-list"></div>
   </div>
 </section>
 
@@ -2415,6 +2399,7 @@ const I18n = {
       analytics_title:'Indicateurs <span>Performance</span>',
       debts_title:'Dettes <span>Clients</span>',
       team_title:'Gestion <span>Équipe</span>',
+      team_info:'💡 Créez un compte PIN pour chaque personne qui utilise cet appareil. Chaque personne se connecte avec son propre code PIN et ses ventes sont suivies séparément.',
       system_title:'Système <span>&amp; Données</span>',
       settings_title:'⚙️ <span>Paramètres</span>',
       new_sale:'Nouvelle Vente',
@@ -2465,7 +2450,7 @@ const I18n = {
       nav_commissions:'Commissions', nav_returns:'Retours',
       nav_suppliers:'Fournisseurs', nav_loyalty:'Fidélité',
       nav_objectives:'Objectifs', nav_categories:'Catégories',
-      nav_multishop:'Multi-Boutiques', nav_bizimport:'Import',
+      nav_bizimport:'Import',
       nav_restock:'Approvisionnement',
       btn_add_sale:'Nouvelle Vente', btn_validate:'Valider',
       btn_cancel:'Annuler', btn_save:'Sauvegarder',
@@ -2789,6 +2774,7 @@ const I18n = {
       analytics_title:'Performance <span>Indicators</span>',
       debts_title:'Client <span>Debts</span>',
       team_title:'Team <span>Management</span>',
+      team_info:'💡 Create a PIN account for each person using this device. Each person logs in with their own PIN and their sales are tracked separately.',
       system_title:'System <span>&amp; Data</span>',
       settings_title:'⚙️ <span>Settings</span>',
       new_sale:'New Sale',
@@ -2839,7 +2825,7 @@ const I18n = {
       nav_commissions:'Commissions', nav_returns:'Returns',
       nav_suppliers:'Suppliers', nav_loyalty:'Loyalty',
       nav_objectives:'Objectives', nav_categories:'Categories',
-      nav_multishop:'Multi-Store', nav_bizimport:'Import',
+      nav_bizimport:'Import',
       nav_restock:'Restock',
       btn_add_sale:'New Sale', btn_validate:'Validate',
       btn_cancel:'Cancel', btn_save:'Save',
@@ -3309,7 +3295,7 @@ const UI = {
   switchTab(id, _fromPopstate=false) {
     // Marquer le bouton "Plus" actif si l'onglet est dans le dropdown
     const dropItems = ['debts','expenses','cashreport','commissions','users','suppliers',
-      'loyalty','returns','objectives','multishop','categories','ai','bizimport',
+      'loyalty','returns','objectives','categories','ai','bizimport',
       'settings','config'];
     const moreBtn = document.getElementById('nav-more-btn');
     if (moreBtn) {
@@ -3342,7 +3328,6 @@ const UI = {
     if (id === 'stock')     Stock.render && Stock.render();
     if (id === 'users')     UI.renderUsers && UI.renderUsers();
     if (id === 'suppliers' && typeof Suppliers !== 'undefined') Suppliers.render();
-    if (id === 'multishop' && typeof MultiShop !== 'undefined') MultiShop.render();
     if (id === 'categories' && typeof Categories !== 'undefined') Categories.render();
     if (id === 'returns' && typeof Returns !== 'undefined') Returns.render();
     if (id === 'loyalty' && typeof Loyalty !== 'undefined') { Loyalty.render(); const el=document.getElementById('loyalty-curr');if(el)el.textContent=Settings.getCurrency(); }
@@ -5392,81 +5377,6 @@ const Suppliers = {
 
 /* ═══════════════════════════════════════════════════════
    MODULE: MULTISHOP — Multi-boutiques
-   ═══════════════════════════════════════════════════════ */
-const MultiShop = {
-
-  getShops() { return DB.data.shops || []; },
-
-  getActive() {
-    const shops = this.getShops();
-    const activeId = DB.data.activeShopId;
-    return shops.find(s => s.id === activeId) || shops[0] || null;
-  },
-
-  add() {
-    const name = document.getElementById('shop-name')?.value.trim();
-    const addr = document.getElementById('shop-addr')?.value.trim();
-    if (!name) return UI.toast(I18n.t('toast_err_shop_name_required'),'danger');
-    if (!DB.data.shops) DB.data.shops = [];
-    DB.data.shops.push({ id:Utils.uid(), name, address:addr||'', createdAt:new Date().toISOString() });
-    DB.save();
-    this.render();
-    UI.toast(`${I18n.t('toast_shop_added')} : ${name}`,'success');
-    ['shop-name','shop-addr'].forEach(id => { const el=document.getElementById(id);if(el)el.value=''; });
-  },
-
-  switchTo(shopId) {
-    DB.data.activeShopId = shopId;
-    DB.save();
-    const shop = this.getShops().find(s => s.id === shopId);
-    if (shop) {
-      Settings.data.shopName = shop.name;
-      Settings.save();
-      Settings._updateBranding();
-      Dashboard.refresh();
-      UI.toast(`${I18n.t('toast_shop_active')} : ${shop.name}`,'success');
-    }
-    this.render();
-  },
-
-  async remove(id) {
-    if (!Auth.isAdmin()) return UI.toast(I18n.t('toast_err_admin_required'),'danger');
-    if (this.getShops().length <= 1) return UI.toast(I18n.t('toast_err_no_shop'),'warning');
-    if (!await SmpModal.confirm(I18n.t('modal_delete_shop_msg'), {title:I18n.t('modal_delete_shop_title'), icon:'🏪', okLabel:I18n.t('modal_delete_shop_ok'), okClass:'btn-danger'})) return;
-    DB.data.shops = this.getShops().filter(s => s.id !== id);
-    if (DB.data.activeShopId === id) DB.data.activeShopId = DB.data.shops[0]?.id;
-    DB.save();
-    this.render();
-    UI.toast(I18n.t('toast_shop_deleted'),'warning');
-  },
-
-  render() {
-    const container = document.getElementById('shops-list');
-    if (!container) return;
-    const shops  = this.getShops();
-    const active = DB.data.activeShopId;
-
-    if (!shops.length) {
-      container.innerHTML = `<div class="empty-state"><p>Aucune boutique configurée.<br>Ajoutez votre première boutique ci-dessus.</p></div>`;
-      return;
-    }
-
-    container.innerHTML = shops.map(s => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--sur2);border-radius:var(--rmd);border:1.5px solid ${s.id===active?'var(--accent)':'var(--border)'};margin-bottom:10px">
-        <div>
-          <div class="fw-700" style="font-size:.88rem">${Utils.esc(s.name)} ${s.id===active?'<span class="badge badge-green">Active</span>':''}</div>
-          <div class="td-mono" style="font-size:.7rem;color:var(--text3)">${Utils.esc(s.address||'—')}</div>
-        </div>
-        <div style="display:flex;gap:6px">
-          ${s.id!==active?`<button class="btn btn-primary btn-sm" onclick="MultiShop.switchTo('${Utils.esc(s.id)}')">Activer</button>`:''}
-          <button class="btn btn-danger btn-sm" onclick="MultiShop.remove('${Utils.esc(s.id)}')" ${!Auth.isAdmin()?'disabled':''}>Suppr.</button>
-        </div>
-      </div>`).join('');
-  }
-};
-
-/* ═══════════════════════════════════════════════════════
-   MODULE: RETURNS — Gestion des retours clients
    ═══════════════════════════════════════════════════════ */
 const Returns = {
 
@@ -7961,6 +7871,57 @@ const Guide = {
       },
       {
         role: 'admin',
+        icon: '🏷️',
+        title: t('Catégories', 'Categories'),
+        desc: `<ul>
+          <li>${t('Organisez vos produits par catégorie pour un stock plus clair','Organize your products by category for a clearer stock view')}</li>
+          <li>${t('Créez, renommez ou supprimez des catégories à tout moment','Create, rename or delete categories at any time')}</li>
+          <li>${t('Chaque produit peut être classé dans une catégorie lors de sa création','Each product can be classified into a category when created')}</li>
+          <li>${t('Filtrez le stock par catégorie pour retrouver un produit plus vite','Filter stock by category to find a product faster')}</li>
+        </ul>`
+      },
+      {
+        role: 'admin',
+        icon: '🚚',
+        title: t('Fournisseurs', 'Suppliers'),
+        desc: `<ul>
+          <li>${t("Enregistrez vos fournisseurs avec leurs coordonnées",'Save your suppliers with their contact details')}</li>
+          <li>${t("Suivez l'historique de vos commandes par fournisseur",'Track your order history per supplier')}</li>
+          <li>${t('Utile pour savoir rapidement qui contacter en cas de rupture de stock','Useful to quickly know who to contact when stock runs out')}</li>
+        </ul>`
+      },
+      {
+        role: 'admin',
+        icon: '🎁',
+        title: t('Programme Fidélité', 'Loyalty Program'),
+        desc: `<ul>
+          <li>${t("Attribuez des points de fidélité à vos clients réguliers à chaque vente",'Award loyalty points to your regular customers on each sale')}</li>
+          <li>${t("Les points s'accumulent par nom de client",'Points accumulate per client name')}</li>
+          <li>${t('Utilisez cette fonctionnalité pour fidéliser vos meilleurs clients','Use this feature to retain your best customers')}</li>
+        </ul>`
+      },
+      {
+        role: 'admin',
+        icon: '🎯',
+        title: t('Objectifs', 'Objectives'),
+        desc: `<ul>
+          <li>${t("Fixez-vous un objectif de chiffre d'affaires ou de ventes",'Set yourself a revenue or sales target')}</li>
+          <li>${t('Suivez votre progression en temps réel','Track your progress in real time')}</li>
+          <li>${t('Un bon moyen de rester motivé et de mesurer la croissance de votre commerce','A good way to stay motivated and measure your business growth')}</li>
+        </ul>`
+      },
+      {
+        role: 'admin',
+        icon: '📥',
+        title: t('Import & Analyse IA', 'AI Import & Analysis'),
+        desc: `<ul>
+          <li>${t("Importez un fichier Excel ou CSV pour ajouter plusieurs produits d'un coup",'Import an Excel or CSV file to add several products at once')}</li>
+          <li>${t("Faites correspondre les colonnes de votre fichier aux champs de l'application",'Match your file\'s columns to the app\'s fields')}</li>
+          <li>${t('Gain de temps considérable si vous avez déjà une liste de produits existante','Considerable time saver if you already have an existing product list')}</li>
+        </ul>`
+      },
+      {
+        role: 'admin',
         icon: '📈',
         title: t('Analyses & Performance', 'Analytics & Performance'),
         desc: `<ul>
@@ -8303,9 +8264,7 @@ const Settings = {
     const brand = name || 'Smart Market Pro';
     const short = name ? name.substring(0,12) : 'SMP';
     const authBrand = document.getElementById('auth-brand');
-    const authShop  = document.getElementById('auth-shop-name');
-    if (name && authBrand && authShop) { authBrand.style.display='none'; authShop.style.display='block'; authShop.textContent=name; }
-    else if (authBrand) { authBrand.style.display=''; if(authShop) authShop.style.display='none'; }
+    if (authBrand) authBrand.textContent = brand;
     const nb=document.getElementById('nav-brand'); if(nb) nb.textContent=brand;
     const mb=document.getElementById('mob-brand'); if(mb) mb.textContent=short;
     document.title = brand + ' | v7.7';
@@ -8437,7 +8396,7 @@ const Auth = {
   _buf: '',
 
   pinInput(key) {
-    const errEl = document.getElementById('auth-error');
+    const errEl = document.getElementById('auth-pin-error');
     if (errEl) errEl.textContent = '';
     if (key === '⌫')      { this._buf = this._buf.slice(0,-1); }
     else if (key === '✓') { this._tryLogin(); return; }
@@ -8510,13 +8469,13 @@ const Auth = {
         if (ld.a >= 5) { ld.u = Date.now() + 30000; ld.a = 0; }
         localStorage.setItem('SMP_PIN_LOCK', JSON.stringify(ld));
         const rem = ld.u > Date.now() ? 0 : 5 - ld.a;
-        const errEl = document.getElementById('auth-error');
+        const errEl = document.getElementById('auth-pin-error');
         if (errEl) errEl.textContent = ld.u > Date.now()
           ? 'Compte verrouillé 30 secondes'
           : 'PIN incorrect' + (rem > 0 ? ' (' + rem + ' essai' + (rem > 1 ? 's' : '') + ' restant)' : '');
         UI.toast(I18n.t('toast_err_pin_wrong'),'danger');
       } catch(_) {
-        const errEl = document.getElementById('auth-error');
+        const errEl = document.getElementById('auth-pin-error');
         if (errEl) errEl.textContent = 'Code PIN incorrect';
         UI.toast(I18n.t('toast_err_pin_wrong'),'danger');
       }
@@ -8858,7 +8817,6 @@ const MobNav = {
     {id:'loyalty',   icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`, label:'Fidélité',     admin:true},
     {id:'returns',   icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>`,  label:'Retours',      admin:true},
     {id:'objectives',icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`, label:'Objectifs',    admin:true},
-    {id:'multishop', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`, label:'Boutiques',    admin:true},
     {id:'categories',icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`,  label:'Catégories',  admin:true},
     {id:'ai',        icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>`, label:'IA',           admin:true},
     {id:'bizimport', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`, label:'Import IA',    admin:true},
