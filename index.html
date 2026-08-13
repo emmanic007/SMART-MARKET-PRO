@@ -835,6 +835,13 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       <div style="font-family:var(--fd);font-size:1.2rem;font-weight:800;color:#000" data-i18n="eod_title">📊 Résumé de la Journée</div>
       <div style="font-family:var(--fm);font-size:.72rem;color:rgba(0,0,0,.6);margin-top:2px" id="eod-date"></div>
     </div>
+    <!-- Sélecteur de date -->
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 24px;border-bottom:1px solid var(--border)">
+      <button class="btn btn-ghost btn-sm" onclick="EODSummary.prevDay()" style="padding:6px 10px">◀</button>
+      <input type="date" id="eod-date-picker" onchange="EODSummary.onDateChange()" style="flex:1;text-align:center;font-size:.82rem;padding:6px 8px">
+      <button class="btn btn-ghost btn-sm" onclick="EODSummary.nextDay()" style="padding:6px 10px" id="eod-next-btn">▶</button>
+      <button class="btn btn-ghost btn-sm" onclick="EODSummary.goToday()" style="padding:6px 10px;white-space:nowrap" data-i18n="btn_today">Aujourd'hui</button>
+    </div>
     <!-- Contenu -->
     <div style="padding:20px 24px" id="eod-content"></div>
     <!-- Actions -->
@@ -1217,9 +1224,9 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label" id="dash-ca-label">CA Aujourd'hui</div><div class="stat-value" id="dash-ca-today">0</div><div class="stat-sub" id="dash-ca-sub">0 ventes</div></div>
     <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label" id="dash-profit-label">Profit du Jour</div><div class="stat-value" id="dash-pft-today">0</div><div class="stat-sub" id="dash-margin-sub">Marge : 0%</div></div>
     <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label" id="dash-debt-label">Dettes en Cours</div><div class="stat-value" id="dash-debt">0</div><div class="stat-sub" id="dash-debt-clients">0 client(s)</div></div>
-    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label" id="dash-alerts-label">Stock en Alerte</div><div class="stat-value" id="dash-alerts">0</div><div class="stat-sub">Produits à réappro</div></div>
-    <div class="stat-card" style="--accent-color:#e87a00"><div class="stat-label">💸 Dépenses du Jour</div><div class="stat-value" id="dash-expenses-today">0</div><div class="stat-sub" id="dash-expenses-sub">0 dépense(s)</div></div>
-    <div class="stat-card" style="--accent-color:#7a00e8;cursor:pointer" onclick="EODSummary.show()"><div class="stat-label">📋 Résumé Fin de Journée</div><div class="stat-value" style="font-size:1.4rem">EOD</div><div class="stat-sub">Appuyer pour voir →</div></div>
+    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label" id="dash-alerts-label">Stock en Alerte</div><div class="stat-value" id="dash-alerts">0</div><div class="stat-sub" data-i18n="dash_restock_needed">Produits à réappro</div></div>
+    <div class="stat-card" style="--accent-color:#e87a00"><div class="stat-label" data-i18n="dash_expenses_today">💸 Dépenses du Jour</div><div class="stat-value" id="dash-expenses-today">0</div><div class="stat-sub" id="dash-expenses-sub" data-i18n="dash_expenses_none">0 dépense(s)</div></div>
+    <div class="stat-card" style="--accent-color:#7a00e8;cursor:pointer" onclick="EODSummary.show()"><div class="stat-label" data-i18n="dash_eod_shortcut">📋 Résumé Fin de Journée</div><div class="stat-value" style="font-size:1.4rem">EOD</div><div class="stat-sub" data-i18n="lbl_tap_to_view">Appuyer pour voir →</div></div>
   </div>
 
   <!-- Conseil IA du jour -->
@@ -1242,7 +1249,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
       <div id="dash-obj-bar" style="height:100%;width:0%;background:var(--accent);border-radius:4px;transition:width .8s ease"></div>
     </div>
-    <div style="font-family:var(--fm);font-size:.65rem;color:var(--text3);margin-top:4px" id="dash-obj-label">Aucun objectif défini — configurez dans Objectifs</div>
+    <div style="font-family:var(--fm);font-size:.65rem;color:var(--text3);margin-top:4px" id="dash-obj-label" data-i18n="dash_no_objective_set">Aucun objectif défini — configurez dans Objectifs</div>
   </div>
 
   <!-- Actions rapides -->
@@ -1250,18 +1257,18 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="card-title">⚡ Actions Rapides</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
       <button class="btn btn-primary" onclick="UI.switchTab('sales')" style="flex-direction:column;gap:4px;padding:16px 10px"><span style="font-size:1.4rem">🛒</span><span style="font-size:.72rem">Nouvelle Vente</span></button>
-      <button class="btn btn-ghost" onclick="UI.switchTab('stock')" style="flex-direction:column;gap:4px;padding:16px 10px"><span style="font-size:1.4rem">📦</span><span style="font-size:.72rem">Gérer le Stock</span></button>
+      <button class="btn btn-ghost" onclick="UI.switchTab('stock')" style="flex-direction:column;gap:4px;padding:16px 10px"><span style="font-size:1.4rem">📦</span><span style="font-size:.72rem" data-i18n="dash_manage_stock">Gérer le Stock</span></button>
       <button class="btn btn-ghost admin-only" onclick="UI.switchTab('analytics')" style="flex-direction:column;gap:4px;padding:16px 10px"><span style="font-size:1.4rem">📈</span><span style="font-size:.72rem">Voir Analyses</span></button>
       <button class="btn btn-ghost admin-only" onclick="UI.switchTab('debts')" style="flex-direction:column;gap:4px;padding:16px 10px"><span style="font-size:1.4rem">💳</span><span style="font-size:.72rem">Dettes Clients</span></button>
       <button class="btn btn-ghost admin-only" onclick="UI.switchTab('ai')" style="flex-direction:column;gap:4px;padding:16px 10px"><span style="font-size:1.4rem">🤖</span><span style="font-size:.72rem">IA Assistant</span></button>
       <button class="btn btn-ghost admin-only" onclick="ExcelExport.daily()" style="flex-direction:column;gap:4px;padding:16px 10px"><span style="font-size:1.4rem">📊</span><span style="font-size:.72rem">Export Journalier</span></button>
-      <button class="btn btn-ghost admin-only" onclick="DeferredSales.open()" style="flex-direction:column;gap:4px;padding:16px 10px;border-color:var(--warning)"><span style="font-size:1.4rem">📒</span><span style="font-size:.72rem">Saisie Différée</span></button>
+      <button class="btn btn-ghost admin-only" onclick="DeferredSales.open()" style="flex-direction:column;gap:4px;padding:16px 10px;border-color:var(--warning)"><span style="font-size:1.4rem">📒</span><span style="font-size:.72rem" data-i18n="dash_deferred_entry">Saisie Différée</span></button>
     </div>
   </div>
 
   <!-- Dernières ventes -->
   <div class="card">
-    <div class="card-title">🕐 Dernières Ventes</div>
+    <div class="card-title" data-i18n="dash_recent_sales">🕐 Dernières Ventes</div>
     <div id="dash-recent-sales" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 
@@ -1293,7 +1300,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       <div class="form-group"><label class="form-label" data-i18n="lbl_qty">Quantité</label><input type="number" id="s-qty" value="1" min="1" inputmode="numeric" oninput="Sales.validate()"></div>
       <div class="form-group"><label class="form-label" data-i18n="lbl_sell">Prix Unitaire <button type="button" onclick="Sales.toggleDiscount()" style="background:none;border:none;color:var(--warning);font-size:.65rem;cursor:pointer;font-family:var(--fm);text-decoration:underline;padding:0;margin-left:6px" id="s-discount-toggle">± Modifier le prix</button></label><input type="number" id="s-price" inputmode="decimal" oninput="Sales.validate()"></div>
       <div class="form-group" id="s-discount-wrap" style="display:none">
-        <label class="form-label" style="color:var(--warning)">Prix réel de vente <span style="font-size:.6rem">(modifié)</span></label>
+        <label class="form-label" style="color:var(--warning)"><span data-i18n="lbl_real_sell_price">Prix réel de vente</span> <span style="font-size:.6rem">(modifié)</span></label>
         <input type="number" id="s-real-price" inputmode="decimal" oninput="Sales.validate()" placeholder="Prix négocié...">
         <div style="margin-top:4px">
           <input type="text" id="s-discount-reason" placeholder="Motif : fidélité, négociation... (optionnel)" style="font-size:.72rem;padding:6px 10px">
@@ -1306,7 +1313,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
         <div id="s-change-display" style="font-family:var(--fd);font-size:1.4rem;font-weight:800;color:var(--accent);padding:10px 14px;background:rgba(0,232,122,.08);border:1.5px solid var(--accent);border-radius:var(--rmd);text-align:center">0 F</div>
       </div>
     </div>
-    <div id="sale-warning">⚠️ Prix de vente inférieur au prix d'achat — marge négative !</div>
+    <div id="sale-warning" data-i18n="sale_warning_neg_margin">⚠️ Prix de vente inférieur au prix d'achat — marge négative !</div>
     <div class="sale-action-row">
       <button class="btn btn-primary" id="btn-do-sale" onclick="Sales.process()" disabled>✅ VALIDER LA VENTE</button>
       <div id="sale-total-preview"></div>
@@ -1334,13 +1341,13 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 <section id="stock" class="page">
   <div class="page-header"><h1 class="page-title" data-i18n="stock_title">Gestion <span>Inventaire</span></h1></div>
   <div class="stats-grid">
-    <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label">Valeur Achat</div><div class="stat-value" id="v-stock-buy">0</div><div class="stat-sub">Coût immobilisé</div></div>
+    <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label" data-i18n="lbl_purchase_value">Valeur Achat</div><div class="stat-value" id="v-stock-buy">0</div><div class="stat-sub" data-i18n="lbl_immobilized_cost">Coût immobilisé</div></div>
     <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Valeur Vente</div><div class="stat-value" id="v-stock-sell">0</div><div class="stat-sub">Potentiel revenus</div></div>
     <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label">En Alerte</div><div class="stat-value" id="v-stock-alerts">0</div><div class="stat-sub">Stock ≤ minimum</div></div>
-    <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label">Références</div><div class="stat-value" id="v-stock-count">0</div><div class="stat-sub">Produits enregistrés</div></div>
+    <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label" data-i18n="lbl_references">Références</div><div class="stat-value" id="v-stock-count">0</div><div class="stat-sub" data-i18n="lbl_products_registered">Produits enregistrés</div></div>
   </div>
   <div class="card">
-    <div class="card-title">Ajouter / Réapprovisionner</div>
+    <div class="card-title" data-i18n="add_restock">Ajouter / Réapprovisionner</div>
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Nom du Produit *</label><input type="text" id="i-name"></div>
       <div class="form-group"><label class="form-label">Code-barres</label><input type="text" id="i-code"></div>
@@ -1348,7 +1355,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       <div class="form-group"><label class="form-label">Prix Vente (F) *</label><input type="number" id="i-sell" min="0" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Quantité *</label><input type="number" id="i-qty" min="1" inputmode="numeric"></div>
       <div class="form-group"><label class="form-label">Seuil Alerte</label><input type="number" id="i-min" placeholder="5" min="1" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">Catégorie</label><select id="i-category"><option value="Autre">Autre</option></select></div>
+      <div class="form-group"><label class="form-label" data-i18n="lbl_category">Catégorie</label><select id="i-category"><option value="Autre">Autre</option></select></div>
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description (optionnel)</label><input type="text" id="i-desc" placeholder="Référence, détails fournisseur..."></div>
       <div class="form-group"><label class="form-label">Fournisseur</label><select id="i-supplier"><option value="">— Aucun —</option></select></div>
       <div class="form-group"><label class="form-label">TVA %</label><input type="number" id="i-tva" placeholder="0" min="0" max="100" value="0" inputmode="numeric"></div>
@@ -1378,8 +1385,8 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="ph-controls">
       <input type="number" id="cash-init" placeholder="Fond de caisse" inputmode="decimal" onchange="Analytics.updateCash()">
       <select id="timePeriod" onchange="Analytics.refresh()">
-        <option value="day">Aujourd'hui</option><option value="week">7 derniers jours</option>
-        <option value="month">Mois en cours</option><option value="year">Année en cours</option>
+        <option value="day" data-i18n="period_today">Aujourd'hui</option><option value="week" data-i18n="period_7days">7 derniers jours</option>
+        <option value="month" data-i18n="period_month">Mois en cours</option><option value="year" data-i18n="period_year">Année en cours</option>
       </select>
     </div>
   </div>
@@ -1391,7 +1398,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label">Liquidités</div><div class="stat-value" id="st-cash">0</div><div class="stat-sub">Caisse + CA - Dettes</div></div>
   </div>
   <div class="analytics-bottom">
-    <div class="card chart-card"><div class="card-title">Évolution des Ventes</div><div class="chart-wrap"><canvas id="mainChart"></canvas></div></div>
+    <div class="card chart-card"><div class="card-title" data-i18n="lbl_sales_evolution">Évolution des Ventes</div><div class="chart-wrap"><canvas id="mainChart"></canvas></div></div>
     <div class="card"><div class="card-title">Top Produits (CA)</div><div id="top-products-list"></div></div>
     <div class="card"><div class="card-title">Performance Vendeurs</div><div id="sellers-perf-list"></div></div>
   </div>
@@ -1405,7 +1412,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
   </div>
   <div class="stats-grid">
     <div class="stat-card" style="--accent-color:var(--danger)"><div class="stat-label">Total Dettes</div><div class="stat-value" id="dt-total">0</div></div>
-    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label">Clients Débiteurs</div><div class="stat-value" id="dt-count">0</div></div>
+    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label" data-i18n="debt_clients">Clients Débiteurs</div><div class="stat-value" id="dt-count">0</div></div>
     <div class="stat-card" style="--accent-color:var(--info)"><div class="stat-label">Dette Moyenne</div><div class="stat-value" id="dt-avg">0</div></div>
     <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Dette Max</div><div class="stat-value" id="dt-max">0</div></div>
   </div>
@@ -1441,14 +1448,14 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
   </div>
 
   <div class="card">
-    <div class="card-title">Créer un Compte</div>
+    <div class="card-title" data-i18n="lbl_create_account">Créer un Compte</div>
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Nom Complet *</label><input type="text" id="u-name"></div>
       <div class="form-group"><label class="form-label">Code PIN (4 chiffres) *</label><input type="password" id="u-pin" maxlength="4" inputmode="numeric"></div>
       <div class="form-group"><label class="form-label">Confirmer PIN *</label><input type="password" id="u-pin2" maxlength="4" inputmode="numeric"></div>
       <div class="form-group"><label class="form-label">Rôle</label><select id="u-role"><option value="seller">Vendeur</option><option value="admin">Administrateur</option></select></div>
     </div>
-    <button class="btn btn-primary mt-14" onclick="Users.add()">CRÉER LE COMPTE</button>
+    <button class="btn btn-primary mt-14" onclick="Users.add()" data-i18n="create_account_btn">CRÉER LE COMPTE</button>
   </div>
   <div class="card">
     <div class="card-title">Comptes Utilisateurs</div>
@@ -1469,7 +1476,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="config-block"><h4 data-i18n="local_backup">💾 Backup Local</h4><p data-i18n="lbl_optional_desc">Exporte en JSON (sauvegarde) ou CSV (Excel).</p><button class="btn btn-ghost btn-full" onclick="DataManager.downloadBackup()">📦 JSON (backup)</button><button class="btn btn-ghost btn-full" onclick="DataManager.downloadCSV()" style="margin-top:6px">📊 CSV (Excel)</button></div>
     <div class="config-block">
       <h4 data-i18n="restore">📥 Restaurer</h4>
-      <p style="font-size:.76rem;color:var(--text3);margin-bottom:10px">Importe un backup JSON pour restaurer toutes vos données.</p>
+      <p style="font-size:.76rem;color:var(--text3);margin-bottom:10px" data-i18n="lbl_restore_desc">Importe un backup JSON pour restaurer toutes vos données.</p>
       <input type="file" id="import-file" accept=".json" onchange="DataManager.importBackup(event)" style="display:none">
       <button class="btn btn-ghost btn-full" onclick="document.getElementById('import-file').click()" data-i18n="btn_restore">
         📂 Importer un backup
@@ -1495,15 +1502,15 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 
   <!-- Storage Preferences -->
   <div class="card mt-14">
-    <div class="card-title">💾 Préférences de Stockage</div>
+    <div class="card-title" data-i18n="lbl_storage_prefs">💾 Préférences de Stockage</div>
     <div class="form-group" style="margin-bottom:12px">
-      <label class="form-label">Préfixe des fichiers exportés</label>
+      <label class="form-label" data-i18n="lbl_export_prefix">Préfixe des fichiers exportés</label>
       <input type="text" id="storage-prefix" placeholder="Ex: MonMagasin" maxlength="20">
     </div>
     <div style="font-size:.78rem;color:var(--text3);margin-bottom:10px;font-family:var(--fm)">
       Les fichiers seront nommés : <span id="storage-preview" style="color:var(--accent)">MonMagasin_Backup_2026.json</span>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="StorageConfig.savePrefs()">💾 Sauvegarder préférences</button>
+    <button class="btn btn-primary btn-sm" onclick="StorageConfig.savePrefs()" data-i18n="lbl_save_prefs">💾 Sauvegarder préférences</button>
   </div>
 
   <div class="card mt-14"><div class="card-title">Informations Système</div><div id="sys-info" style="display:grid;gap:8px;font-family:var(--fm);font-size:.76rem;color:var(--text2)"></div></div>
@@ -1610,7 +1617,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
         </select>
       </div>
       <div style="background:rgba(0,232,122,.06);border:1px solid var(--accent);border-radius:var(--rmd);padding:10px 12px;margin-top:10px;font-family:var(--fm);font-size:.7rem;color:var(--text2);line-height:1.7">
-        <strong>Option recommandée :</strong> % du bénéfice brut<br>
+        <strong data-i18n="lbl_recommended_option">Option recommandée :</strong> <span data-i18n="comm_base_profit">% du bénéfice brut</span><br>
         Exemple : vendeur avec 10% de taux, vend un article à 1000F acheté 600F → bénéfice brut = 400F → commission = 40F
       </div>
       <button class="btn btn-primary btn-full mt-14" onclick="Settings.saveCommissions()" data-i18n="save">Sauvegarder</button>
@@ -1622,7 +1629,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
         <label class="toggle"><input type="checkbox" id="set-auto-backup" checked onchange="Settings.toggleAutoBackup()"><span class="toggle-slider"></span></label>
       </div>
       <div class="toggle-row">
-        <div><div class="toggle-label">Backup à la fermeture</div><div class="toggle-desc"></div></div>
+        <div><div class="toggle-label" data-i18n="lbl_backup_on_close">Backup à la fermeture</div><div class="toggle-desc"></div></div>
         <label class="toggle"><input type="checkbox" id="set-backup-unload" checked><span class="toggle-slider"></span></label>
       </div>
       <hr class="divider">
@@ -1650,19 +1657,19 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       <h3>🤖 IA — <span data-i18n="lbl_barcode">Clé API</span> (Optionnel)</h3>
       <div style="font-size:.78rem;color:var(--text2);margin-bottom:12px;line-height:1.6">
         Connectez une IA externe gratuite pour des réponses encore plus intelligentes.<br>
-        <strong>Recommandé : Google Gemini</strong> — gratuit sur <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a>
+        <strong data-i18n="lbl_gemini_recommended">Recommandé : Google Gemini</strong> — gratuit sur <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a>
       </div>
       <div class="form-group" style="margin-bottom:10px">
         <label class="form-label">Type d'IA</label>
         <select id="ai-provider">
-          <option value="local">IA locale intégrée (par défaut)</option>
+          <option value="local" data-i18n="lbl_local_ai">IA locale intégrée (par défaut)</option>
           <option value="gemini">Google Gemini (gratuit)</option>
           <option value="groq">Groq — Llama 3 (gratuit)</option>
           <option value="mistral">Mistral (gratuit limité)</option>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">Clé API</label>
+        <label class="form-label" data-i18n="lbl_api_key">Clé API</label>
         <input type="password" id="ai-api-key" placeholder="AIza... ou gsk_...">
       </div>
       <div id="ai-key-status" style="font-family:var(--fm);font-size:.72rem;min-height:18px;margin-bottom:10px"></div>
@@ -1673,7 +1680,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
       </div>
       <hr class="divider">
       <div style="font-size:.72rem;color:var(--text3);font-family:var(--fm)">
-        📋 <strong>Comment obtenir une clé Gemini :</strong><br>
+        📋 <strong data-i18n="lbl_how_to_get_key">Comment obtenir une clé Gemini :</strong><br>
         1. Aller sur aistudio.google.com<br>
         2. "Get API Key" → "Create API Key"<br>
         3. Copier la clé → la coller ici
@@ -1690,11 +1697,11 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
         <div style="font-family:var(--fm);font-size:.72rem;color:var(--text2);line-height:1.9">
           <div>© 2026 <strong style="color:var(--text)">EZE Jean Emmanuel</strong></div>
           <div data-i18n="about_copyright">Tous droits réservés</div>
-          <div style="margin-top:6px;color:var(--text3)">Application de gestion commerciale<br>conçue pour les commerçants africains</div>
+          <div style="margin-top:6px;color:var(--text3)" data-i18n="lbl_about_desc">Application de gestion commerciale<br>conçue pour les commerçants africains</div>
           <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
             <span style="color:var(--text3)" data-i18n="about_version">Version</span> : <strong>v7.7 Enterprise</strong><br>
             <span style="color:var(--text3)">Build :</span> <strong>20260527</strong><br>
-            <span style="color:var(--text3)">Licence :</span> <strong>Propriétaire — Usage commercial réservé</strong>
+            <span style="color:var(--text3)" data-i18n="lbl_license">Licence :</span> <strong data-i18n="lbl_license_value">Propriétaire — Usage commercial réservé</strong>
           </div>
         </div>
       </div>
@@ -1719,14 +1726,14 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
   <div class="card" id="ai-summary-card">
     <div class="card-title">📊 Analyse Automatique du Commerce</div>
     <div id="ai-summary-content" style="font-size:.84rem;color:var(--text2);line-height:1.7;min-height:60px">
-      <span style="color:var(--text3);font-family:var(--fm)">Cliquez sur "Générer" pour obtenir votre analyse...</span>
+      <span style="color:var(--text3);font-family:var(--fm)" data-i18n="ai_click_generate">Cliquez sur "Générer" pour obtenir votre analyse...</span>
     </div>
-    <button class="btn btn-primary mt-14" onclick="AIAdvanced.generateSummary()" id="btn-ai-summary">✨ Générer l'analyse</button>
+    <button class="btn btn-primary mt-14" onclick="AIAdvanced.generateSummary()" id="btn-ai-summary" data-i18n="ai_generate">✨ Générer l'analyse</button>
   </div>
   <div class="card">
     <div class="card-title">💬 Assistant Conversationnel</div>
     <div id="ai-chat" style="min-height:200px;max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:14px;padding:4px 0">
-      <div class="ai-msg ai-msg-bot"><div class="ai-msg-content">Bonjour ! Je connais toutes vos données : ventes, stock, dettes, performances. Posez-moi n'importe quelle question sur votre commerce. 🚀</div></div>
+      <div class="ai-msg ai-msg-bot"><div class="ai-msg-content" data-i18n="ai_welcome_msg">Bonjour ! Je connais toutes vos données : ventes, stock, dettes, performances. Posez-moi n'importe quelle question sur votre commerce. 🚀</div></div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <input type="text" id="ai-input" placeholder="Ex: Quel est mon produit le plus rentable ?" style="flex:1;min-width:180px" onkeydown="if(event.key==='Enter')AI.send()">
@@ -1741,8 +1748,8 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     </div>
   </div>
   <div class="card">
-    <div class="card-title">🔍 Anomalies Détectées</div>
-    <div id="ai-anomalies"><span style="color:var(--text3);font-family:var(--fm);font-size:.8rem">Cliquez sur "Générer l'analyse" pour détecter les anomalies.</span></div>
+    <div class="card-title" data-i18n="ai_anomalies">🔍 Anomalies Détectées</div>
+    <div id="ai-anomalies"><span style="color:var(--text3);font-family:var(--fm);font-size:.8rem" data-i18n="ai_click_detect">Cliquez sur "Générer l'analyse" pour détecter les anomalies.</span></div>
   </div>
 </section>
 
@@ -1758,7 +1765,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="card-title">Ajouter un Fournisseur</div>
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="sup-name" placeholder="Ex: Grossiste ABC"></div>
-      <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" id="sup-phone" placeholder="+229 XX XX XX" inputmode="tel"></div>
+      <div class="form-group"><label class="form-label" data-i18n="lbl_phone">Téléphone</label><input type="tel" id="sup-phone" placeholder="+229 XX XX XX" inputmode="tel"></div>
       <div class="form-group"><label class="form-label">Contact / Email</label><input type="text" id="sup-contact" placeholder="contact@fournisseur.com"></div>
       <div class="form-group"><label class="form-label">Notes</label><input type="text" id="sup-notes" placeholder="Conditions, délais..."></div>
     </div>
@@ -1768,7 +1775,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div class="card-title">Liste des Fournisseurs</div>
     <div class="table-wrap">
       <table id="tableSuppliers">
-        <thead><tr><th>Nom</th><th>Téléphone</th><th>Contact</th><th>Commandes</th><th>Total Dépensé</th><th>Dernier Achat</th><th>Actions</th></tr></thead>
+        <thead><tr><th data-i18n="lbl_name">Nom</th><th data-i18n="lbl_phone">Téléphone</th><th data-i18n="lbl_contact">Contact</th><th data-i18n="lbl_orders">Commandes</th><th data-i18n="lbl_total_spent">Total Dépensé</th><th data-i18n="lbl_last_purchase">Dernier Achat</th><th data-i18n="th_action">Actions</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -1779,17 +1786,17 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 <section id="categories" class="page">
   <div class="page-header"><h1 class="page-title"><span data-i18n="nav_categories">Catégories</span></h1></div>
   <div class="card">
-    <div class="card-title">Ajouter une Catégorie</div>
+    <div class="card-title" data-i18n="lbl_add_category">Ajouter une Catégorie</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <input type="text" id="cat-name" placeholder="Ex: Électronique" style="flex:1;min-width:180px">
       <button class="btn btn-primary" onclick="Categories.add(document.getElementById('cat-name').value);document.getElementById('cat-name').value=''">+ Ajouter</button>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">Catégories Disponibles</div>
+    <div class="card-title" data-i18n="lbl_available_categories">Catégories Disponibles</div>
     <div class="table-wrap">
       <table id="tableCat">
-        <thead><tr><th>Catégorie</th><th>Produits</th><th>Action</th></tr></thead>
+        <thead><tr><th data-i18n="lbl_category">Catégorie</th><th data-i18n="lbl_products">Produits</th><th data-i18n="th_action">Action</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -1805,7 +1812,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
   </div>
   <div class="card">
     <div class="card-title">Pour enregistrer un retour</div>
-    <p style="font-size:.82rem;color:var(--text2);margin-bottom:10px">Allez dans <strong>Ventes → Transactions du Jour</strong> et cliquez sur le bouton <strong>↩️</strong> à côté de la vente à retourner.</p>
+    <p style="font-size:.82rem;color:var(--text2);margin-bottom:10px" data-i18n="returns_instruction">Allez dans <strong>Ventes → Transactions du Jour</strong> et cliquez sur le bouton <strong>↩️</strong> à côté de la vente à retourner.</p>
   </div>
   <div class="card">
     <div class="card-title">Historique des Retours</div>
@@ -1822,18 +1829,18 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 <section id="loyalty" class="page">
   <div class="page-header"><h1 class="page-title" data-i18n="loyalty_title">⭐ <span>Programme Fidélité</span></h1></div>
   <div class="stats-grid">
-    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label">Total Points</div><div class="stat-value" id="loyalty-total-points">0</div><div class="stat-sub">Tous clients</div></div>
-    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Clients Fidèles</div><div class="stat-value" id="loyalty-clients">0</div></div>
+    <div class="stat-card" style="--accent-color:var(--warning)"><div class="stat-label" data-i18n="lbl_total_points">Total Points</div><div class="stat-value" id="loyalty-total-points">0</div><div class="stat-sub" data-i18n="lbl_all_clients">Tous clients</div></div>
+    <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label" data-i18n="lbl_loyal_clients">Clients Fidèles</div><div class="stat-value" id="loyalty-clients">0</div></div>
   </div>
   <div class="card">
     <div style="font-size:.82rem;color:var(--text2);line-height:1.6">
-      <strong>Règle :</strong> 1 point pour chaque 100 <span id="loyalty-curr"></span> dépensés<br>
+      <strong data-i18n="loyalty_rule_label">Règle :</strong> <span data-i18n="loyalty_rule_text">1 point pour chaque 100</span> <span id="loyalty-curr"></span> <span data-i18n="loyalty_spent">dépensés</span><br>
       🥉 Bronze (0-199 pts) : 2% remise | 🥈 Silver (200-499 pts) : 5% remise | 🥇 Gold (500+ pts) : 10% remise<br>
-      <em>Les points sont attribués automatiquement à chaque vente avec nom du client.</em>
+      <em data-i18n="loyalty_auto_note">Les points sont attribués automatiquement à chaque vente avec nom du client.</em>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">Classement Clients Fidèles</div>
+    <div class="card-title" data-i18n="loyalty_ranking_title">Classement Clients Fidèles</div>
     <div class="table-wrap">
       <table id="tableLoyalty">
         <thead><tr><th>Client</th><th>Points</th><th>Niveau</th><th>Remise</th><th>Action</th></tr></thead>
@@ -1847,7 +1854,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
 <section id="objectives" class="page">
   <div class="page-header"><h1 class="page-title"><span data-i18n="nav_objectives">Objectifs de Vente</span></h1></div>
   <div class="card">
-    <div class="card-title">Définir les Objectifs</div>
+    <div class="card-title" data-i18n="obj_define_title">Définir les Objectifs</div>
     <div class="form-grid">
       <div class="form-group">
         <label class="form-label">Objectif Journalier</label>
@@ -1898,24 +1905,24 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div style="display:flex;gap:12px;align-items:flex-start">
       <div style="font-size:1.6rem;flex-shrink:0">🤖</div>
       <div>
-        <div style="font-family:var(--fd);font-weight:700;font-size:.88rem;margin-bottom:4px">Analyseur de Données Business</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Importez vos données depuis <strong>Excel, CSV ou JSON</strong>. L'IA détecte automatiquement la structure et génère une analyse complète.</div>
+        <div style="font-family:var(--fd);font-weight:700;font-size:.88rem;margin-bottom:4px" data-i18n="biz_analyzer_title">Analyseur de Données Business</div>
+        <div style="font-size:.8rem;color:var(--text2);line-height:1.6" data-i18n="biz_analyzer_desc">Importez vos données depuis <strong>Excel, CSV ou JSON</strong>. L'IA détecte automatiquement la structure et génère une analyse complète.</div>
       </div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">📁 Étape 1 — Importer votre fichier</div>
+    <div class="card-title" data-i18n="biz_step1_title">📁 Étape 1 — Importer votre fichier</div>
     <label class="btn btn-primary btn-full" style="cursor:pointer;flex-direction:column;gap:6px;padding:22px">
       <span style="font-size:1.6rem">📂</span>
-      <span>Sélectionner un fichier</span>
+      <span data-i18n="biz_select_file">Sélectionner un fichier</span>
       <span style="font-size:.7rem;opacity:.7">CSV • JSON • TXT</span>
       <input type="file" id="biz-import-file" accept=".csv,.json,.txt" onchange="BizImport.loadFile(event)" style="display:none">
     </label>
     <div id="biz-file-info" style="margin-top:10px;font-family:var(--fm);font-size:.75rem;color:var(--text3);text-align:center"></div>
   </div>
   <div class="card" id="biz-mapping-card" style="display:none">
-    <div class="card-title">🔧 Étape 2 — Correspondance des colonnes</div>
-    <div style="font-size:.8rem;color:var(--text2);margin-bottom:14px">L'IA a détecté la structure. Vérifiez les correspondances :</div>
+    <div class="card-title" data-i18n="biz_step2_title">🔧 Étape 2 — Correspondance des colonnes</div>
+    <div style="font-size:.8rem;color:var(--text2);margin-bottom:14px" data-i18n="biz_step2_desc">L'IA a détecté la structure. Vérifiez les correspondances :</div>
     <div class="form-grid" id="biz-mapping-fields"></div>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="BizImport.analyze()">🤖 Analyser avec l'IA</button>
@@ -1924,16 +1931,16 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
   </div>
   <div class="card" id="biz-results-card" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div class="card-title" style="margin-bottom:0">🤖 Résultats Analyse IA</div>
+      <div class="card-title" style="margin-bottom:0" data-i18n="biz_ai_results">🤖 Résultats Analyse IA</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" onclick="BizImport.importToApp()">📥 Intégrer dans l'app</button>
+        <button class="btn btn-primary btn-sm" onclick="BizImport.importToApp()" data-i18n="biz_integrate_btn">📥 Intégrer dans l'app</button>
         <button class="btn btn-ghost btn-sm" onclick="BizImport.exportAnalysis()">📊 Exporter</button>
       </div>
     </div>
     <div id="biz-analysis-content"></div>
   </div>
   <div class="card" id="biz-chat-card" style="display:none">
-    <div class="card-title">💬 Questions sur vos données importées</div>
+    <div class="card-title" data-i18n="biz_chat_title">💬 Questions sur vos données importées</div>
     <div id="biz-chat" style="min-height:120px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:14px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <input type="text" id="biz-chat-input" placeholder="Ex: Quel mois a été le meilleur ?" style="flex:1;min-width:160px" onkeydown="if(event.key==='Enter')BizImport.chat()">
@@ -1951,50 +1958,50 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
   </div>
   <div class="stats-grid">
     <div class="stat-card" style="--accent-color:var(--danger)">
-      <div class="stat-label">Dépenses du Mois</div>
+      <div class="stat-label" data-i18n="exp_month_label">Dépenses du Mois</div>
       <div class="stat-value" id="exp-month">0</div>
-      <div class="stat-sub">Mois en cours</div>
+      <div class="stat-sub" data-i18n="exp_current_month">Mois en cours</div>
     </div>
     <div class="stat-card" style="--accent-color:var(--warning)">
-      <div class="stat-label">Total Dépenses</div>
+      <div class="stat-label" data-i18n="exp_total_label">Total Dépenses</div>
       <div class="stat-value" id="exp-total">0</div>
-      <div class="stat-sub">Toutes périodes</div>
+      <div class="stat-sub" data-i18n="exp_all_periods">Toutes périodes</div>
     </div>
     <div class="stat-card" style="--accent-color:var(--accent)">
-      <div class="stat-label">Bénéfice Net Réel</div>
+      <div class="stat-label" data-i18n="exp_net_profit_label">Bénéfice Net Réel</div>
       <div class="stat-value" id="exp-net">0</div>
-      <div class="stat-sub">CA - Achats - Dépenses</div>
+      <div class="stat-sub" data-i18n="exp_net_formula">CA - Achats - Dépenses</div>
     </div>
     <div class="stat-card" style="--accent-color:var(--info)">
-      <div class="stat-label">Évolution Mensuelle</div>
+      <div class="stat-label" data-i18n="exp_trend_label">Évolution Mensuelle</div>
       <div class="stat-value" id="exp-trend">—</div>
-      <div class="stat-sub">vs mois précédent</div>
+      <div class="stat-sub" data-i18n="exp_vs_previous">vs mois précédent</div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">Enregistrer une Dépense</div>
+    <div class="card-title" data-i18n="exp_record_title">Enregistrer une Dépense</div>
     <div class="form-grid">
       <div class="form-group">
-        <label class="form-label">Description *</label>
+        <label class="form-label" data-i18n="lbl_description_req">Description *</label>
         <input type="text" id="exp-desc" placeholder="Ex: Loyer boutique, Transport...">
       </div>
       <div class="form-group">
-        <label class="form-label">Montant *</label>
+        <label class="form-label" data-i18n="lbl_amount_req">Montant *</label>
         <input type="number" id="exp-amount" inputmode="decimal" min="0" placeholder="0">
       </div>
       <div class="form-group">
-        <label class="form-label">Catégorie</label>
+        <label class="form-label" data-i18n="lbl_category">Catégorie</label>
         <select id="exp-cat">
-          <option value="Loyer">🏠 Loyer / Local</option>
-          <option value="Transport">🚗 Transport / Livraison</option>
-          <option value="Salaires">👥 Salaires / Commissions</option>
-          <option value="Electricite">💡 Électricité / Eau</option>
-          <option value="Telephone">📱 Téléphone / Internet</option>
-          <option value="Achat stock">📦 Achat de stock</option>
-          <option value="Entretien">🔧 Entretien / Réparation</option>
-          <option value="Impots">📋 Impôts / Taxes</option>
-          <option value="Marketing">📣 Marketing / Pub</option>
-          <option value="Autre">📌 Autre</option>
+          <option value="Loyer" data-i18n="exp_cat_rent">🏠 Loyer / Local</option>
+          <option value="Transport" data-i18n="exp_cat_transport">🚗 Transport / Livraison</option>
+          <option value="Salaires" data-i18n="exp_cat_salaries">👥 Salaires / Commissions</option>
+          <option value="Electricite" data-i18n="exp_cat_electricity">💡 Électricité / Eau</option>
+          <option value="Telephone" data-i18n="exp_cat_phone">📱 Téléphone / Internet</option>
+          <option value="Achat stock" data-i18n="exp_cat_stock">📦 Achat de stock</option>
+          <option value="Entretien" data-i18n="exp_cat_maintenance">🔧 Entretien / Réparation</option>
+          <option value="Impots" data-i18n="exp_cat_taxes">📋 Impôts / Taxes</option>
+          <option value="Marketing" data-i18n="exp_cat_marketing">📣 Marketing / Pub</option>
+          <option value="Autre" data-i18n="lbl_other">📌 Autre</option>
         </select>
       </div>
       <div class="form-group">
@@ -2006,16 +2013,16 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
         <input type="text" id="exp-notes" placeholder="Détails supplémentaires...">
       </div>
     </div>
-    <button class="btn btn-primary mt-14" onclick="Expenses.add()">+ ENREGISTRER LA DÉPENSE</button>
+    <button class="btn btn-primary mt-14" onclick="Expenses.add()" data-i18n="exp_save_btn">+ ENREGISTRER LA DÉPENSE</button>
   </div>
   <div class="card">
-    <div class="card-title">Historique des Dépenses</div>
+    <div class="card-title" data-i18n="exp_history_title">Historique des Dépenses</div>
     <div class="table-wrap">
       <table id="tableExpenses">
         <thead>
           <tr>
-            <th>Date</th><th>Description</th><th>Catégorie</th>
-            <th>Montant</th><th>Par</th><th>Action</th>
+            <th data-i18n="lbl_date">Date</th><th data-i18n="lbl_description">Description</th><th data-i18n="lbl_category">Catégorie</th>
+            <th data-i18n="lbl_amount">Montant</th><th data-i18n="lbl_by">Par</th><th data-i18n="th_action">Action</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -2031,7 +2038,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <button class="btn btn-info btn-sm" onclick="Printer.printCashReport()">🖨️ Imprimer</button>
   </div>
   <div class="card">
-    <div class="card-title">Clôture de Caisse</div>
+    <div class="card-title" data-i18n="cr_closing_title">Clôture de Caisse</div>
     <div style="font-size:.82rem;color:var(--text2);margin-bottom:14px;line-height:1.6">
       Comptez l'argent physiquement dans votre caisse, entrez le montant ci-dessous.
       L'app calcule automatiquement les écarts avec la caisse théorique.
@@ -2043,7 +2050,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
           placeholder="Montant au début de la journée">
       </div>
       <div class="form-group">
-        <label class="form-label">Montant compté maintenant</label>
+        <label class="form-label" data-i18n="cr_counted_amount">Montant compté maintenant</label>
         <input type="number" id="cr-counted" inputmode="decimal"
           placeholder="Argent dans la caisse en ce moment">
       </div>
@@ -2053,7 +2060,7 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     </button>
   </div>
   <div class="card" id="cr-result-card" style="display:none">
-    <div class="card-title">📋 Résultat de Clôture</div>
+    <div class="card-title" data-i18n="cr_result_title">📋 Résultat de Clôture</div>
     <div id="cr-result-content"></div>
   </div>
 </section>
@@ -2417,6 +2424,20 @@ const I18n = {
       mark_all_paid:'✅ Tout marquer payé',
       create_account:'Créer un Compte',
       create_account_btn:'CRÉER LE COMPTE',
+      lbl_create_account:'Créer un Compte',
+      lbl_restore_desc:'Importe un backup JSON pour restaurer toutes vos données.',
+      lbl_storage_prefs:'💾 Préférences de Stockage',
+      lbl_export_prefix:'Préfixe des fichiers exportés',
+      lbl_save_prefs:'💾 Sauvegarder préférences',
+      lbl_recommended_option:'Option recommandée :',
+      lbl_backup_on_close:'Backup à la fermeture',
+      lbl_gemini_recommended:'Recommandé : Google Gemini',
+      lbl_local_ai:'IA locale intégrée (par défaut)',
+      lbl_api_key:'Clé API',
+      lbl_how_to_get_key:'Comment obtenir une clé Gemini :',
+      lbl_about_desc:'Application de gestion commerciale<br>conçue pour les commerçants africains',
+      lbl_license:'Licence :',
+      lbl_license_value:'Propriétaire — Usage commercial réservé',
       user_accounts:'Comptes Utilisateurs',
       local_backup:'💾 Backup Local', restore:'📥 Restaurer',
       danger_zone:'🚨 Zone Danger',
@@ -2439,6 +2460,15 @@ const I18n = {
       ai_title:'🤖 <span>IA Assistant</span>',
       ai_analysis:'📊 Analyse Automatique du Commerce',
       ai_generate:"✨ Générer l'analyse",
+      ai_click_generate:'Cliquez sur "Générer" pour obtenir votre analyse...',
+      ai_click_detect:'Cliquez sur "Générer l\'analyse" pour détecter les anomalies.',
+      ai_welcome_msg:'Bonjour ! Je connais toutes vos données : ventes, stock, dettes, performances. Posez-moi n\'importe quelle question sur votre commerce. 🚀',
+      lbl_contact:'Contact', lbl_orders:'Commandes',
+      lbl_total_spent:'Total Dépensé', lbl_last_purchase:'Dernier Achat',
+      lbl_add_category:'Ajouter une Catégorie',
+      lbl_products:'Produits',
+      lbl_available_categories:'Catégories Disponibles',
+      returns_instruction:'Allez dans <strong>Ventes → Transactions du Jour</strong> et cliquez sur le bouton <strong>↩️</strong> à côté de la vente à retourner.',
       ai_chat:'💬 Assistant Conversationnel',
       ai_anomalies:'🔍 Anomalies Détectées',
       ai_send:'Envoyer',
@@ -2464,6 +2494,8 @@ const I18n = {
       lbl_date:'Date', lbl_total:'Total',
       lbl_profit:'Profit', lbl_debt:'Dette',
       lbl_status:'Statut', lbl_category:'Catégorie',
+      lbl_purchase_value:'Valeur Achat', lbl_immobilized_cost:'Coût immobilisé',
+      lbl_references:'Références', lbl_products_registered:'Produits enregistrés',
       lbl_description:'Description', lbl_phone:'Téléphone',
       lbl_threshold:'Seuil Alerte',
       lbl_barcode:'Code-barres',
@@ -2487,6 +2519,7 @@ const I18n = {
       deferred_add_line:'+ Ajouter une ligne',
       deferred_submit:'Enregistrer tout',
       eod_title:'Résumé Fin de Journée',
+      btn_today:"Aujourd'hui",
       restock_title:'Rapport Approvisionnement',
       restock_out:'En rupture',
       restock_low:'Stock faible',
@@ -2543,6 +2576,40 @@ const I18n = {
       lbl_confirm_pin:'Confirmer le PIN',
       lbl_supplier:'Fournisseur',
       lbl_amount:'Montant',
+      lbl_by:'Par', lbl_other:'📌 Autre',
+      lbl_description_req:'Description *', lbl_amount_req:'Montant *',
+      exp_month_label:'Dépenses du Mois', exp_current_month:'Mois en cours',
+      exp_total_label:'Total Dépenses', exp_all_periods:'Toutes périodes',
+      exp_net_profit_label:'Bénéfice Net Réel', exp_net_formula:'CA - Achats - Dépenses',
+      exp_trend_label:'Évolution Mensuelle', exp_vs_previous:'vs mois précédent',
+      exp_record_title:'Enregistrer une Dépense',
+      exp_cat_rent:'🏠 Loyer / Local', exp_cat_transport:'🚗 Transport / Livraison',
+      exp_cat_salaries:'👥 Salaires / Commissions', exp_cat_electricity:'💡 Électricité / Eau',
+      exp_cat_phone:'📱 Téléphone / Internet', exp_cat_stock:'📦 Achat de stock',
+      exp_cat_maintenance:'🔧 Entretien / Réparation', exp_cat_taxes:'📋 Impôts / Taxes',
+      exp_cat_marketing:'📣 Marketing / Pub',
+      exp_save_btn:'+ ENREGISTRER LA DÉPENSE', exp_history_title:'Historique des Dépenses',
+      lbl_total_points:'Total Points', lbl_all_clients:'Tous clients',
+      lbl_loyal_clients:'Clients Fidèles',
+      loyalty_rule_label:'Règle :', loyalty_rule_text:'1 point pour chaque 100',
+      loyalty_spent:'dépensés',
+      loyalty_auto_note:'Les points sont attribués automatiquement à chaque vente avec nom du client.',
+      loyalty_ranking_title:'Classement Clients Fidèles',
+      obj_define_title:'Définir les Objectifs',
+      biz_analyzer_title:'Analyseur de Données Business',
+      biz_analyzer_desc:'Importez vos données depuis <strong>Excel, CSV ou JSON</strong>. L\'IA détecte automatiquement la structure et génère une analyse complète.',
+      biz_step1_title:'📁 Étape 1 — Importer votre fichier',
+      biz_select_file:'Sélectionner un fichier',
+      biz_step2_title:'🔧 Étape 2 — Correspondance des colonnes',
+      biz_step2_desc:'L\'IA a détecté la structure. Vérifiez les correspondances :',
+      biz_ai_results:'🤖 Résultats Analyse IA',
+      biz_integrate_btn:"📥 Intégrer dans l'app",
+      biz_chat_title:'💬 Questions sur vos données importées',
+      period_today:"Aujourd'hui", period_7days:'7 derniers jours',
+      lbl_sales_evolution:'Évolution des Ventes',
+      cr_closing_title:'Clôture de Caisse',
+      cr_counted_amount:'Montant compté maintenant',
+      cr_result_title:'📋 Résultat de Clôture',
       lbl_optional_desc:'Description (optionnel)',
       lbl_cash_collected:'Montant encaissé',
       lbl_seller_name:'Nom du vendeur',
@@ -2590,6 +2657,17 @@ const I18n = {
       no_returns:'Aucun retour client',
       no_commissions:'Aucune commission',
       no_objectives:'Aucun objectif défini',
+      dash_restock_needed:'Produits à réappro',
+      dash_expenses_today:'💸 Dépenses du Jour',
+      dash_expenses_none:'0 dépense(s)',
+      dash_eod_shortcut:'📋 Résumé Fin de Journée',
+      dash_no_objective_set:'Aucun objectif défini — configurez dans Objectifs',
+      dash_manage_stock:'Gérer le Stock',
+      dash_deferred_entry:'Saisie Différée',
+      dash_recent_sales:'🕐 Dernières Ventes',
+      lbl_real_sell_price:'Prix réel de vente',
+      sale_warning_neg_margin:'⚠️ Prix de vente inférieur au prix d\'achat — marge négative !',
+      lbl_tap_to_view:'Appuyer pour voir →',
       role_admin:'Admin', role_seller:'Vendeur',
       stock_out:'Épuisé', stock_alert:'Alerte',
       // Paramètres
@@ -2714,6 +2792,10 @@ const I18n = {
       toast_err_pin_same:'Le nouveau PIN doit être différent de l\'actuel',
       toast_err_pin_mismatch:'Les deux nouveaux PINs ne correspondent pas',
       toast_err_pin_match2:'PINs ne correspondent pas',
+      toast_err_no_account_selected:'Aucun compte sélectionné',
+      toast_err_account_locked:'Compte verrouillé — réessayez dans {s}s',
+      toast_err_master_empty:'Entrez le code maître',
+      toast_err_master_wrong:'Code maître incorrect',
       toast_err_pin_used:'Ce PIN est déjà utilisé',
       toast_err_pin_used_other:'Ce PIN est déjà utilisé par un autre compte',
       toast_err_pin_enter:'Saisissez votre PIN actuel (4 chiffres)',
@@ -2792,6 +2874,20 @@ const I18n = {
       mark_all_paid:'✅ Mark all as paid',
       create_account:'Create Account',
       create_account_btn:'CREATE ACCOUNT',
+      lbl_create_account:'Create Account',
+      lbl_restore_desc:'Import a JSON backup to restore all your data.',
+      lbl_storage_prefs:'💾 Storage Preferences',
+      lbl_export_prefix:'Exported files prefix',
+      lbl_save_prefs:'💾 Save preferences',
+      lbl_recommended_option:'Recommended option:',
+      lbl_backup_on_close:'Backup on close',
+      lbl_gemini_recommended:'Recommended: Google Gemini',
+      lbl_local_ai:'Built-in local AI (default)',
+      lbl_api_key:'API Key',
+      lbl_how_to_get_key:'How to get a Gemini key:',
+      lbl_about_desc:'Commercial management application<br>designed for African merchants',
+      lbl_license:'License:',
+      lbl_license_value:'Proprietary — Commercial use reserved',
       user_accounts:'User Accounts',
       local_backup:'💾 Local Backup', restore:'📥 Restore',
       danger_zone:'🚨 Danger Zone',
@@ -2814,6 +2910,15 @@ const I18n = {
       ai_title:'🤖 <span>AI Assistant</span>',
       ai_analysis:'📊 Automatic Business Analysis',
       ai_generate:'✨ Generate analysis',
+      ai_click_generate:'Click "Generate" to get your analysis...',
+      ai_click_detect:'Click "Generate analysis" to detect anomalies.',
+      ai_welcome_msg:'Hello! I know all your data: sales, stock, debts, performance. Ask me anything about your business. 🚀',
+      lbl_contact:'Contact', lbl_orders:'Orders',
+      lbl_total_spent:'Total Spent', lbl_last_purchase:'Last Purchase',
+      lbl_add_category:'Add a Category',
+      lbl_products:'Products',
+      lbl_available_categories:'Available Categories',
+      returns_instruction:'Go to <strong>Sales → Today\'s Transactions</strong> and click the <strong>↩️</strong> button next to the sale to return.',
       ai_chat:'💬 Conversational Assistant',
       ai_anomalies:'🔍 Detected Anomalies',
       ai_send:'Send',
@@ -2839,6 +2944,8 @@ const I18n = {
       lbl_date:'Date', lbl_total:'Total',
       lbl_profit:'Profit', lbl_debt:'Debt',
       lbl_status:'Status', lbl_category:'Category',
+      lbl_purchase_value:'Purchase Value', lbl_immobilized_cost:'Capital tied up',
+      lbl_references:'References', lbl_products_registered:'Products registered',
       lbl_description:'Description', lbl_phone:'Phone',
       lbl_threshold:'Alert Threshold',
       lbl_barcode:'Barcode',
@@ -2862,6 +2969,7 @@ const I18n = {
       deferred_add_line:'+ Add line',
       deferred_submit:'Save all',
       eod_title:'End of Day Summary',
+      btn_today:'Today',
       restock_title:'Restocking Report',
       restock_out:'Out of Stock',
       restock_low:'Low Stock',
@@ -2918,6 +3026,40 @@ const I18n = {
       lbl_confirm_pin:'Confirm PIN',
       lbl_supplier:'Supplier',
       lbl_amount:'Amount',
+      lbl_by:'By', lbl_other:'📌 Other',
+      lbl_description_req:'Description *', lbl_amount_req:'Amount *',
+      exp_month_label:'Monthly Expenses', exp_current_month:'Current month',
+      exp_total_label:'Total Expenses', exp_all_periods:'All periods',
+      exp_net_profit_label:'Real Net Profit', exp_net_formula:'Revenue - Purchases - Expenses',
+      exp_trend_label:'Monthly Trend', exp_vs_previous:'vs previous month',
+      exp_record_title:'Record an Expense',
+      exp_cat_rent:'🏠 Rent / Premises', exp_cat_transport:'🚗 Transport / Delivery',
+      exp_cat_salaries:'👥 Salaries / Commissions', exp_cat_electricity:'💡 Electricity / Water',
+      exp_cat_phone:'📱 Phone / Internet', exp_cat_stock:'📦 Stock Purchase',
+      exp_cat_maintenance:'🔧 Maintenance / Repair', exp_cat_taxes:'📋 Taxes',
+      exp_cat_marketing:'📣 Marketing / Ads',
+      exp_save_btn:'+ SAVE EXPENSE', exp_history_title:'Expense History',
+      lbl_total_points:'Total Points', lbl_all_clients:'All clients',
+      lbl_loyal_clients:'Loyal Customers',
+      loyalty_rule_label:'Rule:', loyalty_rule_text:'1 point for every 100',
+      loyalty_spent:'spent',
+      loyalty_auto_note:'Points are automatically awarded on each sale with a client name.',
+      loyalty_ranking_title:'Loyal Customers Ranking',
+      obj_define_title:'Set Objectives',
+      biz_analyzer_title:'Business Data Analyzer',
+      biz_analyzer_desc:'Import your data from <strong>Excel, CSV or JSON</strong>. The AI automatically detects the structure and generates a complete analysis.',
+      biz_step1_title:'📁 Step 1 — Import your file',
+      biz_select_file:'Select a file',
+      biz_step2_title:'🔧 Step 2 — Column matching',
+      biz_step2_desc:'The AI detected the structure. Check the matches:',
+      biz_ai_results:'🤖 AI Analysis Results',
+      biz_integrate_btn:'📥 Integrate into app',
+      biz_chat_title:'💬 Questions about your imported data',
+      period_today:'Today', period_7days:'Last 7 days',
+      lbl_sales_evolution:'Sales Evolution',
+      cr_closing_title:'Cash Closing',
+      cr_counted_amount:'Amount counted now',
+      cr_result_title:'📋 Closing Result',
       lbl_optional_desc:'Description (optional)',
       lbl_cash_collected:'Collected amount',
       lbl_seller_name:'Seller name',
@@ -2965,6 +3107,17 @@ const I18n = {
       no_returns:'No customer returns',
       no_commissions:'No commissions',
       no_objectives:'No objectives defined',
+      dash_restock_needed:'Products to restock',
+      dash_expenses_today:'💸 Today\'s Expenses',
+      dash_expenses_none:'0 expense(s)',
+      dash_eod_shortcut:'📋 End of Day Summary',
+      dash_no_objective_set:'No objective set — configure in Objectives',
+      dash_manage_stock:'Manage Stock',
+      dash_deferred_entry:'Deferred Entry',
+      dash_recent_sales:'🕐 Recent Sales',
+      lbl_real_sell_price:'Actual selling price',
+      sale_warning_neg_margin:'⚠️ Selling price below purchase price — negative margin!',
+      lbl_tap_to_view:'Tap to view →',
       role_admin:'Admin', role_seller:'Seller',
       stock_out:'Out of stock', stock_alert:'Alert',
       // Paramètres
@@ -3089,6 +3242,10 @@ const I18n = {
       toast_err_pin_same:'New PIN must differ from current',
       toast_err_pin_mismatch:'The two new PINs do not match',
       toast_err_pin_match2:'PINs do not match',
+      toast_err_no_account_selected:'No account selected',
+      toast_err_account_locked:'Account locked — try again in {s}s',
+      toast_err_master_empty:'Enter the master code',
+      toast_err_master_wrong:'Incorrect master code',
       toast_err_pin_used:'This PIN is already in use',
       toast_err_pin_used_other:'This PIN is already used by another account',
       toast_err_pin_enter:'Enter your current PIN (4 digits)',
@@ -3729,7 +3886,7 @@ const Analytics = {
 
     // Dépenses du jour (heure locale)
     const todayStr = new Date().toDateString();
-    const todayExp = (DB.data.expenses||[]).filter(e => new Date((e.date||'')+'T00:00:00').toDateString()===todayStr);
+    const todayExp = (DB.data.expenses||[]).filter(e => new Date(e.date||0).toDateString()===todayStr);
     const totalExp = todayExp.reduce((t,e)=>t+e.amount,0);
 
     se('st-ca',   Utils.currency(ca));
@@ -4066,9 +4223,9 @@ const Users = {
     const errEl  = document.getElementById('edit-user-error');
     const u      = DB.data.users.find(x => x.id === userId);
     if (!u) { this.closeEdit(); return; }
-    if (!name) { if (errEl) errEl.textContent = 'Le nom est requis.'; return; }
+    if (!name) { if (errEl) errEl.textContent = I18n.t('toast_err_name_required'); return; }
     if (pin && (pin.length !== 4 || !/^[0-9]{4}$/.test(pin))) {
-      if (errEl) errEl.textContent = 'PIN invalide — 4 chiffres requis.'; return;
+      if (errEl) errEl.textContent = I18n.t('toast_err_pin_4digits'); return;
     }
     u.name = name;
     if (pin) u.pinHash = await Utils.sha256(pin);
@@ -4290,7 +4447,7 @@ const ExcelExport = {
       [],
       ['Date','Description','Catégorie','Montant'],
       ...exps.map(e=>[
-        new Date((e.date||'')+'T00:00:00').toLocaleDateString('fr-FR'),
+        new Date(e.date||0).toLocaleDateString('fr-FR'),
         e.desc||'', e.category||'', e.amount+' '+curr
       ])
     ];
@@ -6447,7 +6604,7 @@ const DeferredSales = {
       infoEl.textContent = `Il y a ${diff} jours (${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}) — visible dans l'onglet Historique.`;
       infoEl.style.color = 'var(--text3)';
     } else {
-      infoEl.textContent = '⚠️ Date future non autorisée.';
+      infoEl.textContent = '⚠️ ' + I18n.t('toast_err_date_future');
       infoEl.style.color = 'var(--danger)';
     }
   },
@@ -6858,8 +7015,10 @@ const EODSummary = {
     if (Auth.currentUser && Auth.isAdmin()) this.show();
   },
 
-  show() {
-    const today  = new Date().toDateString();
+  show(dateStr) {
+    // dateStr optionnel au format 'YYYY-MM-DD' — sinon aujourd'hui
+    const targetDate = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
+    const today  = targetDate.toDateString();
     const sales  = DB.activeSales().filter(s => new Date(s.date).toDateString() === today);
     const todayReturns = (DB.data.returns || []).filter(r => new Date(r.date).toDateString() === today);
     const ca     = sales.reduce((t, s) => t + s.total,  0);
@@ -6867,7 +7026,7 @@ const EODSummary = {
     const debt   = sales.reduce((t, s) => t + s.debt,   0);
     const paid   = sales.reduce((t, s) => t + (s.paid||0), 0);
     const margin = ca > 0 ? ((profit / ca) * 100).toFixed(1) : '0';
-    const exps   = (DB.data.expenses || []).filter(e => new Date((e.date||'')+'T00:00:00').toDateString() === today);
+    const exps   = (DB.data.expenses || []).filter(e => new Date(e.date||0).toDateString() === today);
     const expT   = exps.reduce((t, e) => t + e.amount, 0);
     const netP   = profit - expT;
 
@@ -6894,7 +7053,19 @@ const EODSummary = {
       </div>`;
 
     const dateEl = document.getElementById('eod-date');
-    if (dateEl) dateEl.textContent = new Date().toLocaleDateString(I18n._lang==='en'?'en-GB':'fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    if (dateEl) dateEl.textContent = targetDate.toLocaleDateString(I18n._lang==='en'?'en-GB':'fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+    const picker = document.getElementById('eod-date-picker');
+    if (picker) {
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth()+1).padStart(2,'0');
+      const d = String(targetDate.getDate()).padStart(2,'0');
+      picker.value = `${y}-${m}-${d}`;
+      const now = new Date();
+      picker.max = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    }
+    const nextBtn = document.getElementById('eod-next-btn');
+    if (nextBtn) nextBtn.disabled = (today === new Date().toDateString());
 
     const content = document.getElementById('eod-content');
     if (content) content.innerHTML = `
@@ -6916,6 +7087,35 @@ const EODSummary = {
     const ov = document.getElementById('eod-overlay');
     if (ov) ov.style.display = 'flex';
   },
+
+  onDateChange() {
+    const picker = document.getElementById('eod-date-picker');
+    if (picker && picker.value) this.show(picker.value);
+  },
+
+  prevDay() {
+    const picker = document.getElementById('eod-date-picker');
+    const current = picker?.value ? new Date(picker.value + 'T12:00:00') : new Date();
+    current.setDate(current.getDate() - 1);
+    const y = current.getFullYear(), m = String(current.getMonth()+1).padStart(2,'0'), d = String(current.getDate()).padStart(2,'0');
+    this.show(`${y}-${m}-${d}`);
+  },
+
+  nextDay() {
+    const picker = document.getElementById('eod-date-picker');
+    const current = picker?.value ? new Date(picker.value + 'T12:00:00') : new Date();
+    current.setDate(current.getDate() + 1);
+    const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+    const nextMidnight = new Date(current); nextMidnight.setHours(0,0,0,0);
+    if (nextMidnight > todayMidnight) return; // Ne pas dépasser aujourd'hui
+    const y = current.getFullYear(), m = String(current.getMonth()+1).padStart(2,'0'), d = String(current.getDate()).padStart(2,'0');
+    this.show(`${y}-${m}-${d}`);
+  },
+
+  goToday() {
+    this.show();
+  },
+
 
   close() {
     const ov = document.getElementById('eod-overlay');
@@ -7632,8 +7832,8 @@ const RecoveryManager = {
     const err   = document.getElementById('recovery-error');
     const master = this.getMasterCode();
 
-    if (!input) { if(err) err.textContent = 'Entrez le code maître'; return; }
-    if (input !== master) { if(err) err.textContent = 'Code maître incorrect'; return; }
+    if (!input) { if(err) err.textContent = I18n.t('toast_err_master_empty'); return; }
+    if (input !== master) { if(err) err.textContent = I18n.t('toast_err_master_wrong'); return; }
 
     // Reset all PINs to 0000 and grant access as first admin
     const hash0000 = await Utils.sha256('0000');
@@ -8419,7 +8619,7 @@ const Auth = {
       if (ld.u > Date.now()) {
         const secs = Math.ceil((ld.u - Date.now()) / 1000);
         const errEl = document.getElementById('auth-pin-error');
-        if (errEl) errEl.textContent = 'Compte verrouillé — réessayez dans ' + secs + 's';
+        if (errEl) errEl.textContent = I18n.t('toast_err_account_locked').replace('{s}', secs);
         return;
       }
     } catch(_) {}
@@ -8429,7 +8629,7 @@ const Auth = {
     const candidate = this._pendingUser;
     if (!candidate) {
       const errEl = document.getElementById('auth-pin-error');
-      if (errEl) errEl.textContent = 'Aucun compte sélectionné';
+      if (errEl) errEl.textContent = I18n.t('toast_err_no_account_selected');
       return;
     }
     const found = candidate.pinHash === hash ? candidate : null;
@@ -8476,7 +8676,7 @@ const Auth = {
         UI.toast(I18n.t('toast_err_pin_wrong'),'danger');
       } catch(_) {
         const errEl = document.getElementById('auth-pin-error');
-        if (errEl) errEl.textContent = 'Code PIN incorrect';
+        if (errEl) errEl.textContent = I18n.t('toast_err_pin_wrong');
         UI.toast(I18n.t('toast_err_pin_wrong'),'danger');
       }
     }
@@ -8918,7 +9118,7 @@ const Onboarding = {
 
       if (pin && pin.length === 4 && /^\d{4}$/.test(pin)) {
         if (pin !== pin2) {
-          if (errEl) errEl.textContent = 'Les deux PINs ne correspondent pas.';
+          if (errEl) errEl.textContent = I18n.t('toast_err_pin_match2');
           return;
         }
         // Mettre à jour le PIN de l'admin
@@ -8930,7 +9130,7 @@ const Onboarding = {
           UI.toast(I18n.t('toast_pin_updated'),'success');
         }
       } else if (pin && pin.length > 0) {
-        if (errEl) errEl.textContent = 'PIN invalide — 4 chiffres requis.';
+        if (errEl) errEl.textContent = I18n.t('toast_err_pin_4digits');
         return;
       }
     }
