@@ -80,6 +80,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100
 /* PIN GRID - styles critiques */
 #pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px;min-height:160px;}
 .pin-btn{padding:16px 10px;background:var(--sur2);border:1.5px solid var(--border);border-radius:var(--rmd);color:var(--text);font-family:var(--fd);font-size:1.15rem;font-weight:700;cursor:pointer;transition:var(--tr);-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;width:100%;}
+.eod-mode-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
 .pin-btn:hover{background:var(--border);border-color:var(--accent);color:var(--accent);}
 .pin-btn:active{transform:scale(.92);background:rgba(0,232,122,.12);}
 .auth-error{font-size:.78rem;color:var(--danger);min-height:18px;margin-top:6px;font-weight:600;}
@@ -834,6 +835,13 @@ console.log('[SMP PWA] Mode localStorage + Service Worker ./sw.js');
     <div style="background:linear-gradient(135deg,var(--accent),var(--acc2));padding:20px 24px">
       <div style="font-family:var(--fd);font-size:1.2rem;font-weight:800;color:#000" data-i18n="eod_title">📊 Résumé de la Journée</div>
       <div style="font-family:var(--fm);font-size:.72rem;color:rgba(0,0,0,.6);margin-top:2px" id="eod-date"></div>
+    </div>
+    <!-- Sélecteur de mode de période -->
+    <div style="display:flex;gap:6px;padding:10px 24px 0;overflow-x:auto">
+      <button class="btn btn-ghost btn-sm eod-mode-btn" data-mode="day" onclick="EODSummary.setMode('day')" style="white-space:nowrap;padding:5px 12px;font-size:.72rem" data-i18n="eod_mode_day">Jour</button>
+      <button class="btn btn-ghost btn-sm eod-mode-btn" data-mode="week" onclick="EODSummary.setMode('week')" style="white-space:nowrap;padding:5px 12px;font-size:.72rem" data-i18n="eod_mode_week">Semaine</button>
+      <button class="btn btn-ghost btn-sm eod-mode-btn" data-mode="month" onclick="EODSummary.setMode('month')" style="white-space:nowrap;padding:5px 12px;font-size:.72rem" data-i18n="eod_mode_month">Mois</button>
+      <button class="btn btn-ghost btn-sm eod-mode-btn" data-mode="year" onclick="EODSummary.setMode('year')" style="white-space:nowrap;padding:5px 12px;font-size:.72rem" data-i18n="eod_mode_year">Année</button>
     </div>
     <!-- Sélecteur de date -->
     <div style="display:flex;align-items:center;gap:8px;padding:12px 24px;border-bottom:1px solid var(--border)">
@@ -2520,6 +2528,8 @@ const I18n = {
       deferred_submit:'Enregistrer tout',
       eod_title:'Résumé Fin de Journée',
       btn_today:"Aujourd'hui",
+      eod_mode_day:'Jour', eod_mode_week:'Semaine',
+      eod_mode_month:'Mois', eod_mode_year:'Année',
       restock_title:'Rapport Approvisionnement',
       restock_out:'En rupture',
       restock_low:'Stock faible',
@@ -2970,6 +2980,8 @@ const I18n = {
       deferred_submit:'Save all',
       eod_title:'End of Day Summary',
       btn_today:'Today',
+      eod_mode_day:'Day', eod_mode_week:'Week',
+      eod_mode_month:'Month', eod_mode_year:'Year',
       restock_title:'Restocking Report',
       restock_out:'Out of Stock',
       restock_low:'Low Stock',
@@ -7015,20 +7027,81 @@ const EODSummary = {
     if (Auth.currentUser && Auth.isAdmin()) this.show();
   },
 
+  _mode: 'day', // 'day' | 'week' | 'month' | 'year'
+  _anchorDate: null, // Date de référence pour la navigation
+
+  setMode(mode) {
+    this._mode = mode;
+    document.querySelectorAll('.eod-mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    this.show(this._anchorDate ? this._toDateStr(this._anchorDate) : null);
+  },
+
+  _toDateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  },
+
+  // Calcule {start, end} en Date selon le mode et une date d'ancrage
+  _getRange(anchor) {
+    const s = new Date(anchor); s.setHours(0,0,0,0);
+    const e = new Date(anchor); e.setHours(23,59,59,999);
+    if (this._mode === 'day') {
+      return { start: s, end: e };
+    }
+    if (this._mode === 'week') {
+      // Semaine ISO : lundi à dimanche
+      const day = s.getDay(); // 0=dimanche
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const start = new Date(s); start.setDate(s.getDate() + diffToMonday);
+      const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+      return { start, end };
+    }
+    if (this._mode === 'month') {
+      const start = new Date(s.getFullYear(), s.getMonth(), 1);
+      const end = new Date(s.getFullYear(), s.getMonth()+1, 0); end.setHours(23,59,59,999);
+      return { start, end };
+    }
+    if (this._mode === 'year') {
+      const start = new Date(s.getFullYear(), 0, 1);
+      const end = new Date(s.getFullYear(), 11, 31); end.setHours(23,59,59,999);
+      return { start, end };
+    }
+    return { start: s, end: e };
+  },
+
+  _formatRangeLabel(start, end) {
+    const L = I18n._lang === 'en';
+    if (this._mode === 'day') {
+      return start.toLocaleDateString(L?'en-GB':'fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    }
+    const opts = {day:'numeric', month:'short'};
+    const startStr = start.toLocaleDateString(L?'en-GB':'fr-FR', opts);
+    const endStr = end.toLocaleDateString(L?'en-GB':'fr-FR', {day:'numeric', month:'short', year:'numeric'});
+    if (this._mode === 'week') return (L?'Week: ':'Semaine : ') + startStr + ' — ' + endStr;
+    if (this._mode === 'month') return start.toLocaleDateString(L?'en-GB':'fr-FR', {month:'long', year:'numeric'});
+    if (this._mode === 'year') return String(start.getFullYear());
+    return startStr + ' — ' + endStr;
+  },
+
   show(dateStr) {
-    // dateStr optionnel au format 'YYYY-MM-DD' — sinon aujourd'hui
-    const targetDate = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
-    const today  = targetDate.toDateString();
-    const sales  = DB.activeSales().filter(s => new Date(s.date).toDateString() === today);
-    const todayReturns = (DB.data.returns || []).filter(r => new Date(r.date).toDateString() === today);
-    const ca     = sales.reduce((t, s) => t + s.total,  0);
-    const profit = sales.reduce((t, s) => t + s.profit, 0);
-    const debt   = sales.reduce((t, s) => t + s.debt,   0);
-    const paid   = sales.reduce((t, s) => t + (s.paid||0), 0);
-    const margin = ca > 0 ? ((profit / ca) * 100).toFixed(1) : '0';
-    const exps   = (DB.data.expenses || []).filter(e => new Date(e.date||0).toDateString() === today);
-    const expT   = exps.reduce((t, e) => t + e.amount, 0);
-    const netP   = profit - expT;
+    // dateStr optionnel 'YYYY-MM-DD' — sinon aujourd'hui ou dernière date visitée
+    const anchor = dateStr ? new Date(dateStr + 'T12:00:00') : (this._anchorDate || new Date());
+    this._anchorDate = anchor;
+    const { start, end } = this._getRange(anchor);
+
+    const inRange = (d) => { const t = new Date(d).getTime(); return t >= start.getTime() && t <= end.getTime(); };
+
+    const sales   = DB.activeSales().filter(s => inRange(s.date));
+    const periodReturns = (DB.data.returns || []).filter(r => inRange(r.date));
+    const ca      = sales.reduce((t, s) => t + s.total,  0);
+    const profit  = sales.reduce((t, s) => t + s.profit, 0);
+    const debt    = sales.reduce((t, s) => t + s.debt,   0);
+    const paid    = sales.reduce((t, s) => t + (s.paid||0), 0);
+    const margin  = ca > 0 ? ((profit / ca) * 100).toFixed(1) : '0';
+    const exps    = (DB.data.expenses || []).filter(e => inRange(e.date||0));
+    const expT    = exps.reduce((t, e) => t + e.amount, 0);
+    const netP    = profit - expT;
 
     const capitalReel = sales.reduce((t, s) => {
       const item = DB.data.items.find(i => i.id === s.itemId);
@@ -7053,32 +7126,41 @@ const EODSummary = {
       </div>`;
 
     const dateEl = document.getElementById('eod-date');
-    if (dateEl) dateEl.textContent = targetDate.toLocaleDateString(I18n._lang==='en'?'en-GB':'fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    if (dateEl) dateEl.textContent = this._formatRangeLabel(start, end);
 
     const picker = document.getElementById('eod-date-picker');
     if (picker) {
-      const y = targetDate.getFullYear();
-      const m = String(targetDate.getMonth()+1).padStart(2,'0');
-      const d = String(targetDate.getDate()).padStart(2,'0');
-      picker.value = `${y}-${m}-${d}`;
+      picker.value = this._toDateStr(anchor);
       const now = new Date();
-      picker.max = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      picker.max = this._toDateStr(now);
     }
     const nextBtn = document.getElementById('eod-next-btn');
-    if (nextBtn) nextBtn.disabled = (today === new Date().toDateString());
+    if (nextBtn) {
+      const now = new Date();
+      nextBtn.disabled = end.getTime() >= now.setHours(23,59,59,999);
+    }
+    // Marquer le bouton de mode actif
+    document.querySelectorAll('.eod-mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === this._mode);
+    });
+
+    const expensesLabel = this._mode === 'day'
+      ? (I18n._lang==='en'?'Day Expenses':'💸 Dépenses du Jour')
+      : (I18n._lang==='en'?'Period Expenses':'💸 Dépenses de la Période');
+    const salesCountLabel = I18n._lang==='en'?'Number of sales':'Nombre de ventes';
 
     const content = document.getElementById('eod-content');
     if (content) content.innerHTML = `
-      ${row(I18n._lang==='en'?'Number of sales':'Nombre de ventes', sales.length + ' transactions')}
+      ${row(salesCountLabel, sales.length + ' transactions')}
       ${row(I18n._lang==='en'?'Revenue':'Chiffre d\'Affaires', Utils.currency(ca), 'var(--info)')}
       ${row(I18n._lang==='en'?'Gross Profit':'Profit Brut', Utils.currency(profit) + ' (' + margin + '%)', 'var(--accent)')}
-      ${expT > 0 ? row(I18n._lang==='en'?'Day Expenses':'💸 Dépenses du Jour', '-' + Utils.currency(expT), 'var(--danger)') : ''}
+      ${row(expensesLabel, (expT>0?'-':'')+Utils.currency(expT), expT>0?'var(--danger)':'var(--text2)')}
       ${expT > 0 ? row(I18n._lang==='en'?'Net Profit':'✅ Bénéfice Net Réel', Utils.currency(netP), netP >= 0 ? 'var(--accent)' : 'var(--danger)') : ''}
       ${row(I18n._lang==='en'?'Cost of goods sold':'🏷️ Capital Réel (coût achat)', Utils.currency(capitalReel), 'var(--text2)')}
       ${debt > 0 ? row(I18n._lang==='en'?'Uncollected receivables':'Créances non encaissées', Utils.currency(debt), 'var(--warning)') : ''}
-      ${fondOuverture > 0 ? row(I18n._lang==='en'?'Opening fund':'Fond d\'ouverture', Utils.currency(fondOuverture)) : ''}
+      ${this._mode==='day' && fondOuverture > 0 ? row(I18n._lang==='en'?'Opening fund':'Fond d\'ouverture', Utils.currency(fondOuverture)) : ''}
       ${row(I18n._lang==='en'?'💰 Cash in register':'💰 Liquidités en caisse', Utils.currency(caisse), caisse>=0?'var(--accent)':'var(--danger)')}
-      ${todayReturns.length > 0 ? row(I18n._lang==='en'?'Customer returns':'Retours clients', todayReturns.length + ' retour(s) — -' + Utils.currency(todayReturns.reduce((t,r)=>t+r.amount,0)), 'var(--danger)') : ''}
+      ${periodReturns.length > 0 ? row(I18n._lang==='en'?'Customer returns':'Retours clients', periodReturns.length + ' retour(s) — -' + Utils.currency(periodReturns.reduce((t,r)=>t+r.amount,0)), 'var(--danger)') : ''}
       ${topProd ? row(I18n._lang==='en'?'Best Product':'Meilleur Produit', Utils.esc(topProd[0]) + ' — ' + Utils.currency(topProd[1])) : ''}
       ${topSel  ? row(I18n._lang==='en'?'Best Seller':'Meilleur Vendeur',  Utils.esc(topSel[0]) + ' — ' + Utils.currency(topSel[1])) : ''}
       ${sales.length === 0 ? `<div style="text-align:center;padding:20px;color:var(--text3);font-family:var(--fm);font-size:.82rem">${I18n.t('no_sales')}</div>` : ''}
@@ -7093,29 +7175,33 @@ const EODSummary = {
     if (picker && picker.value) this.show(picker.value);
   },
 
+  // Recule d'une unité selon le mode actif (jour/semaine/mois/année)
   prevDay() {
-    const picker = document.getElementById('eod-date-picker');
-    const current = picker?.value ? new Date(picker.value + 'T12:00:00') : new Date();
-    current.setDate(current.getDate() - 1);
-    const y = current.getFullYear(), m = String(current.getMonth()+1).padStart(2,'0'), d = String(current.getDate()).padStart(2,'0');
-    this.show(`${y}-${m}-${d}`);
+    const current = this._anchorDate ? new Date(this._anchorDate) : new Date();
+    if (this._mode === 'day')   current.setDate(current.getDate() - 1);
+    if (this._mode === 'week')  current.setDate(current.getDate() - 7);
+    if (this._mode === 'month') current.setMonth(current.getMonth() - 1);
+    if (this._mode === 'year')  current.setFullYear(current.getFullYear() - 1);
+    this.show(this._toDateStr(current));
   },
 
+  // Avance d'une unité selon le mode actif, jamais au-delà d'aujourd'hui
   nextDay() {
-    const picker = document.getElementById('eod-date-picker');
-    const current = picker?.value ? new Date(picker.value + 'T12:00:00') : new Date();
-    current.setDate(current.getDate() + 1);
-    const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
-    const nextMidnight = new Date(current); nextMidnight.setHours(0,0,0,0);
-    if (nextMidnight > todayMidnight) return; // Ne pas dépasser aujourd'hui
-    const y = current.getFullYear(), m = String(current.getMonth()+1).padStart(2,'0'), d = String(current.getDate()).padStart(2,'0');
-    this.show(`${y}-${m}-${d}`);
+    const current = this._anchorDate ? new Date(this._anchorDate) : new Date();
+    if (this._mode === 'day')   current.setDate(current.getDate() + 1);
+    if (this._mode === 'week')  current.setDate(current.getDate() + 7);
+    if (this._mode === 'month') current.setMonth(current.getMonth() + 1);
+    if (this._mode === 'year')  current.setFullYear(current.getFullYear() + 1);
+    const { start: nextStart } = this._getRange(current);
+    const now = new Date(); now.setHours(23,59,59,999);
+    if (nextStart.getTime() > now.getTime()) return; // Ne pas dépasser aujourd'hui
+    this.show(this._toDateStr(current));
   },
 
   goToday() {
+    this._anchorDate = null;
     this.show();
   },
-
 
   close() {
     const ov = document.getElementById('eod-overlay');
